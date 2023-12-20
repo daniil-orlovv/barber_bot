@@ -3,13 +3,13 @@ from aiogram.filters import Command
 from aiogram.types import Message, ReplyKeyboardMarkup
 
 from config import BOT_TOKEN, location
-from keyboards import button_contacts
+from keyboards import button_contacts, button_sign_up
 
 
 # Создаем объекты бота и диспетчера
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
-keyboard = ReplyKeyboardMarkup(keyboard=[[button_contacts]],
+keyboard = ReplyKeyboardMarkup(keyboard=[[button_contacts, button_sign_up]],
                                resize_keyboard=True)
 
 
@@ -37,6 +37,11 @@ async def command_contacts(message: Message):
         location.longitude
     )
     await message.answer('Московский пр-т., 159 \nТелефон:  +7 921 565-16-15')
+
+
+@dp.message(F.text == 'Записаться')
+async def command_sign_up(message: Message):
+    await message.answer('Перейдите по ссылке: https://n793568.yclients.com')
 
 
 if __name__ == '__main__':
