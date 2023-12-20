@@ -1,36 +1,50 @@
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import Message, ReplyKeyboardRemove, ReplyKeyboardMarkup
 
-BOT_TOKEN = '6691199047:AAHOr-ueqvD9Qn7WsVEx_YspHknm_6i5UXU'
+from config import BOT_TOKEN, location
+from keyboards import button_contacts, button_map
+
 
 # Создаем объекты бота и диспетчера
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
+keyboard = ReplyKeyboardMarkup(keyboard=[[button_contacts, button_map]],
+                               resize_keyboard=True)
 
 
 # Этот хэндлер будет срабатывать на команду "/start"
 @dp.message(Command(commands=["start"]))
 async def process_start_command(message: Message):
-    await message.answer('Привет!\nЯ бот Максуда!\nДавай запишу тебя на стрижку!')
+    await message.answer(
+        text='Привет!\nЯ бот Максуда!'
+             '\nДавай запишу тебя на стрижку!',
+        reply_markup=keyboard
+    )
 
 
 # Этот хэндлер будет срабатывать на команду "/help"
 @dp.message(Command(commands=['help']))
 async def process_help_command(message: Message):
-    await message.answer(
-        'Напиши мне что-нибудь и в ответ '
-        'я пришлю тебе твое сообщение'
+    await message.answer('Напиши мне что-нибудь и в ответ '
+                         'я пришлю тебе твое сообщение'
     )
 
 
-@dp.message(Command(commands=['about']))
-async def process_about_command(message: Message):
+@dp.message(F.text == 'Контакты')
+async def command_contacts(message: Message):
     await message.answer(
-        'Адрес:  Московский пр-т., 159\n'
-        'Время работы:  10:00-22:00\n'
-        'Телефон:  +7 921 565-16-15\n'
+        text='Телефон:  +7 921 565-16-15'
     )
+
+
+@dp.message(F.text == 'Мы на карте')
+async def command_map(message: Message):
+    await message.answer_location(
+        location.latitude,
+        location.longitude
+    )
+    await message.answer('Московский пр-т., 159')
 
 
 if __name__ == '__main__':
