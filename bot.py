@@ -3,7 +3,7 @@ from aiogram.types import InlineKeyboardMarkup
 from aiogram.filters import Command
 from aiogram.types import Message, ReplyKeyboardMarkup
 
-from config import BOT_TOKEN, location
+from config import BOT_TOKEN, location, TIME, PHONE, ADDRESS
 from keyboards import button_contacts, button_sign_up, url_button
 
 
@@ -32,7 +32,7 @@ async def command_contacts(message: Message):
         location.latitude,
         location.longitude
     )
-    await message.answer('Московский пр-т., 159 \nТелефон:  +7 921 565-16-15')
+    await message.answer(f"{ADDRESS}\n{TIME}\n{PHONE}")
 
 
 @dp.message(F.text == 'Записаться')
