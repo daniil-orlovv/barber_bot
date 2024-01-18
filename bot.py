@@ -8,6 +8,7 @@ from config import BOT_TOKEN, location, TIME, PHONE, ADDRESS
 from keyboards import (button_contacts, button_sign_up, url_button,
                        create_inline_kb, create_keyboards,
                        digital_of_month, times)
+from requests_of_api import get_free_date
 
 
 # Создаем объекты бота и диспетчера
@@ -52,9 +53,11 @@ async def command_sign_up_test(message: Message):
 
 @dp.message(F.text == 'Выбрать дату и время')
 async def command_sign_up_time(message: Message):
-    keyboard = create_inline_kb(7, *digital_of_month)
+    free_days = get_free_date()
+    first_month = free_days.get('1')
+    keyboard = create_inline_kb(7, *first_month)
     await message.answer(
-        text='Свободные даты:',
+        text='Свободные даты на текущий месяц:',
         reply_markup=keyboard
     )
 
