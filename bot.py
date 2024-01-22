@@ -8,7 +8,7 @@ from config import BOT_TOKEN, location, TIME, PHONE, ADDRESS
 from keyboards import (button_contacts, button_sign_up, url_button,
                        create_keyboards, create_inline_kb,
                        times)
-from api import get_free_date, get_free_time
+from api import get_free_date, get_free_time, get_free_services
 
 
 # Создаем объекты бота и диспетчера
@@ -86,6 +86,23 @@ async def send_times(callback: types.CallbackQuery):
     )
 
 
+@dp.callback_query(lambda callback: callback.data.startswith('time_'))
+async def send_services(callback: types.CallbackQuery):
+    time = callback.data.split('_')[1]
+    adjust = (2, 2, 2)
+    free_services = get_free_services()
+    keyboard_times = create_inline_kb(adjust, 'service', *free_services)
+    keyboard_cancel = create_keyboards(1, 'Отменить запись')
+    await callback.message.answer(
+        text="Выберите услугу:",
+        reply_markup=keyboard_times
+    )
+    await callback.message.answer(
+        text='Вы можете отменить запись:',
+        reply_markup=keyboard_cancel
+    )
+
+
 @dp.callback_query(lambda callback: callback.data in times)
 async def send_answer_order(callback: types.CallbackQuery):
     await callback.message.answer(
@@ -96,10 +113,17 @@ async def send_answer_order(callback: types.CallbackQuery):
 
 @dp.message(F.text == 'Выбрать услугу')
 async def command_services(message: Message):
-    keyboard = create_inline_kb(3, 'Услуга 1', 'Услуга 2', 'Услуга 3')
+    adjust = (2, 2, 2)
+    free_services = get_free_services()
+    keyboard_times = create_inline_kb(adjust, 'service', *free_services)
+    keyboard_cancel = create_keyboards(1, 'Отменить запись')
     await message.answer(
-        text='Услуги:',
-        reply_markup=keyboard
+        text="Выберите услугу:",
+        reply_markup=keyboard_times
+    )
+    await message.answer(
+        text='Вы можете отменить запись:',
+        reply_markup=keyboard_cancel
     )
 
 
