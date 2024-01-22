@@ -7,8 +7,8 @@ from aiogram import types
 from config import BOT_TOKEN, location, TIME, PHONE, ADDRESS
 from keyboards import (button_contacts, button_sign_up, url_button,
                        create_inline_kb, create_keyboards, create_calendar_kb,
-                       digital_of_month, times)
-from requests_of_api import get_free_date
+                       times)
+from api import get_free_date, get_free_time
 
 
 # Создаем объекты бота и диспетчера
@@ -59,24 +59,30 @@ async def command_sign_up_time(message: Message):
     for i in range(0, count_months):
         month = str(i + 1)
         days = free_days.get(month)
-        keyboard = create_calendar_kb(adjust, month, days)
+        params = (month, days)
+        keyboard = create_calendar_kb(adjust, 'date', *params)
         await message.answer(
             text='Ближайшие свободные даты:',
             reply_markup=keyboard
         )
 
 
-@dp.callback_query(lambda callback: callback.data in digital_of_month)
+@dp.callback_query(lambda callback: callback.data.startswith('1'))
 async def send_times(callback: types.CallbackQuery):
-    keyboard_times = create_inline_kb(3, *times)
-    keyboard = create_keyboards(1, 'Отменить запись')
+    month, day = callback.data.split('_')
+    date = f'2024-01-{day}'
+    adjust = (1, 7, 7, 7, 7, 7)
+    free_times = get_free_time(date)
+    params = [date, free_times]
+    keyboard_times = create_calendar_kb(adjust, 'time', *params)
+    keyboard_cancel = create_keyboards(1, 'Отменить запись')
     await callback.message.answer(
         text="Выберите доступное время:",
         reply_markup=keyboard_times
     )
     await callback.message.answer(
         text='Вы можете отменить запись:',
-        reply_markup=keyboard
+        reply_markup=keyboard_cancel
     )
 
 
