@@ -1,10 +1,9 @@
 import requests
-import json
-import calendar
 
 
 
 company_id = 977067
+staff_id = 2933362
 url = 'https://api.yclients.com/api/v1/book_record/977067/'
 headers = {
     'Authorization': 'Bearer 2k3ub5wjf96f8fytz6eu, User ea1aa4b4bbe452623b8098776499b52d',
@@ -44,7 +43,7 @@ headers = {
 
 
 def get_free_date():
-    url = 'https://api.yclients.com/api/v1/book_dates/977067?staff_id=2933362'
+    url = f'https://api.yclients.com/api/v1/book_dates/{company_id}?staff_id={staff_id}'
     response = requests.get(url, headers=headers)
     response_json = response.json()
 
@@ -60,7 +59,7 @@ def get_free_date():
 
 
 def get_free_time(date):
-    url = f'https://api.yclients.com/api/v1/book_times/977067/2933362/{date}?'
+    url = f'https://api.yclients.com/api/v1/book_times/{company_id}/{staff_id}/{date}?'
     response = requests.get(url, headers=headers)
     response_json = response.json()
 
@@ -70,3 +69,17 @@ def get_free_time(date):
         for item in data:
             free_times.append(item.get('time'))
     return free_times
+
+
+def get_free_services():
+    url = f'https://api.yclients.com/api/v1/book_services/{company_id}?staff_id={staff_id}'
+    response = requests.get(url, headers=headers)
+    response_json = response.json()
+    if "data" in response_json:
+        data = response_json['data']
+        free_services = []
+        services = data.get('services')
+        for service in services:
+            free_services.append(service.get('title'))
+    print(free_services)
+    return free_services
