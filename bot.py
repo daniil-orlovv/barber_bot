@@ -6,7 +6,7 @@ from aiogram import types
 
 from config import BOT_TOKEN, location, TIME, PHONE, ADDRESS
 from keyboards import (button_contacts, button_sign_up, url_button,
-                       create_inline_kb, create_keyboards, create_calendar_kb,
+                       create_keyboards, create_inline_kb,
                        times)
 from api import get_free_date, get_free_time
 
@@ -60,7 +60,7 @@ async def command_sign_up_time(message: Message):
         month = str(i + 1)
         days = free_days.get(month)
         params = (month, days)
-        keyboard = create_calendar_kb(adjust, 'date', *params)
+        keyboard = create_inline_kb(adjust, 'date', *params)
         await message.answer(
             text='Ближайшие свободные даты:',
             reply_markup=keyboard
@@ -74,7 +74,7 @@ async def send_times(callback: types.CallbackQuery):
     adjust = (1, 7, 7, 7, 7, 7)
     free_times = get_free_time(date)
     params = [date, free_times]
-    keyboard_times = create_calendar_kb(adjust, 'time', *params)
+    keyboard_times = create_inline_kb(adjust, 'time', *params)
     keyboard_cancel = create_keyboards(1, 'Отменить запись')
     await callback.message.answer(
         text="Выберите доступное время:",
