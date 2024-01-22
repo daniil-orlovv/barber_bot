@@ -15,6 +15,7 @@ digital_of_month = (
     '22', '23', '24', '25', '26', '27', '28',
     '29', '30', '31'
 )
+
 times = (
     '10:00', '11:00', '15:00'
 )
@@ -59,4 +60,35 @@ def create_keyboards(width, *args):
         buttons.append(KeyboardButton(text=i))
 
     kb_builder.row(*buttons, width=width)
+    return kb_builder.as_markup(resize_keyboard=True)
+
+
+def return_month(value):
+    months_key = {
+        '1': 'Январь', '2': 'Февраль', '3': 'Март', '4': 'Апрель', '5': 'Май',
+        '6': 'Июнь', '7': 'Июль', '8': 'Август', '9': 'Сентябрь',
+        '10': 'Октябрь', '11': 'Ноябрь', '12': 'Декабрь'
+    }
+    return months_key.get(value)
+
+
+def create_calendar_kb(adjust, month, days):
+    kb_builder = InlineKeyboardBuilder()
+    buttons: list[InlineKeyboardButton] = []
+    months: list[InlineKeyboardButton] = []
+
+    named_month = return_month(month)
+
+    for day in days:
+        buttons.append(InlineKeyboardButton(
+                    text=day,
+                    callback_data=day
+        ))
+    months.append(InlineKeyboardButton(
+                text=named_month,
+                callback_data=named_month
+    ))
+
+    kb_builder.add(*months, *buttons)
+    kb_builder.adjust(*adjust)
     return kb_builder.as_markup(resize_keyboard=True)
