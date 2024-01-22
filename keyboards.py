@@ -74,12 +74,26 @@ def create_inline_kb(adjust, type, *args, **kwargs):
             for time in args[1]:
                 buttons.append(InlineKeyboardButton(
                             text=time,
-                            callback_data=time
+                            callback_data=f'time_{time}'
                 ))
             label_button.append(InlineKeyboardButton(
                         text=args[0],
                         callback_data=args[0]
             ))
+        if kwargs:
+            for button, text in kwargs.items():
+                buttons.append(InlineKeyboardButton(
+                    text=text,
+                    callback_data=button))
+
+    if type == 'service':
+
+        if args:
+            for service in args:
+                buttons.append(InlineKeyboardButton(
+                            text=service,
+                            callback_data=service
+                ))
         if kwargs:
             for button, text in kwargs.items():
                 buttons.append(InlineKeyboardButton(
