@@ -1,5 +1,8 @@
 import requests
 import json
+import calendar
+
+
 
 company_id = 977067
 url = 'https://api.yclients.com/api/v1/book_record/977067/'
@@ -40,17 +43,16 @@ headers = {
 # print(response.text)
 
 
-def convert_to_string(item):
-    return str(item)
-
-
 def get_free_date():
-    url = 'https://api.yclients.com/api/v1/book_dates/977067'
+    url = 'https://api.yclients.com/api/v1/book_dates/977067?staff_id=2933362'
     response = requests.get(url, headers=headers)
     response_json = response.json()
     if "data" in response_json and "booking_days" in response_json["data"]:
         booking_days = response_json["data"]["booking_days"]
-        quoted_dict = {key: [str(item) for item in value] for key, value in booking_days.items()}
-        return quoted_dict
+        quoted_dict = {
+            key: [
+                str(item) for item in value
+            ] for key, value in booking_days.items()
+        }
 
-print(get_free_date())
+        return quoted_dict
