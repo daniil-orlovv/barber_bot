@@ -26,33 +26,6 @@ url_button = InlineKeyboardButton(
 )
 
 
-def create_inline_kb(width: int,
-                     *args: str,
-                     **kwargs: str) -> InlineKeyboardMarkup:
-    # Инициализируем билдер
-    kb_builder = InlineKeyboardBuilder()
-    # Инициализируем список для кнопок
-    buttons: list[InlineKeyboardButton] = []
-
-    # Заполняем список кнопками из аргументов args и kwargs
-    if args:
-        for button in args:
-            buttons.append(InlineKeyboardButton(
-                text=LEXICON[button] if button in LEXICON else button,
-                callback_data=button))
-    if kwargs:
-        for button, text in kwargs.items():
-            buttons.append(InlineKeyboardButton(
-                text=text,
-                callback_data=button))
-
-    # Распаковываем список с кнопками в билдер методом row c параметром width
-    kb_builder.row(*buttons, width=width)
-
-    # Возвращаем объект инлайн-клавиатуры
-    return kb_builder.as_markup()
-
-
 def create_keyboards(width, *args):
     kb_builder = ReplyKeyboardBuilder()
     buttons = []
@@ -72,23 +45,49 @@ def return_month(value):
     return months_key.get(value)
 
 
-def create_calendar_kb(adjust, month, days):
+def create_inline_kb(adjust, type, *args, **kwargs):
     kb_builder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = []
-    months: list[InlineKeyboardButton] = []
+    label_button: list[InlineKeyboardButton] = []
 
-    named_month = return_month(month)
+    if type == 'date':
+        named_month = return_month(args[0])
 
-    for day in days:
-        buttons.append(InlineKeyboardButton(
-                    text=day,
-                    callback_data=day
-        ))
-    months.append(InlineKeyboardButton(
-                text=named_month,
-                callback_data=named_month
-    ))
+        if args:
+            for day in args[1]:
+                buttons.append(InlineKeyboardButton(
+                            text=day,
+                            callback_data=f"{args[0]}_{day}"
+                ))
+            label_button.append(InlineKeyboardButton(
+                        text=named_month,
+                        callback_data=named_month
+            ))
+        if kwargs:
+            for button, text in kwargs.items():
+                buttons.append(InlineKeyboardButton(
+                    text=text,
+                    callback_data=button))
 
-    kb_builder.add(*months, *buttons)
+    if type == 'time':
+        if args:
+            for time in args[1]:
+                buttons.append(InlineKeyboardButton(
+                            text=time,
+                            callback_data=time
+                ))
+            label_button.append(InlineKeyboardButton(
+                        text=args[0],
+                        callback_data=args[0]
+            ))
+        if kwargs:
+            for button, text in kwargs.items():
+                buttons.append(InlineKeyboardButton(
+                    text=text,
+                    callback_data=button))
+
+    kb_builder.add(*label_button, *buttons)
     kb_builder.adjust(*adjust)
+    kb = kb_builder.as_markup(resize_keyboard=True)
+    print(kb)
     return kb_builder.as_markup(resize_keyboard=True)
