@@ -6,7 +6,7 @@ from aiogram import types
 
 from config import BOT_TOKEN, location, TIME, PHONE, ADDRESS
 from keyboards import (button_contacts, button_sign_up, url_button,
-                       create_inline_kb, create_keyboards,
+                       create_inline_kb, create_keyboards, create_calendar_kb,
                        digital_of_month, times)
 from requests_of_api import get_free_date
 
@@ -54,12 +54,16 @@ async def command_sign_up_test(message: Message):
 @dp.message(F.text == 'Выбрать дату и время')
 async def command_sign_up_time(message: Message):
     free_days = get_free_date()
-    first_month = free_days.get('1')
-    keyboard = create_inline_kb(7, *first_month)
-    await message.answer(
-        text='Свободные даты на текущий месяц:',
-        reply_markup=keyboard
-    )
+    count_months = len(free_days)
+    adjust = (1, 7, 7, 7, 7, 7)
+    for i in range(0, count_months):
+        month = str(i + 1)
+        days = free_days.get(month)
+        keyboard = create_calendar_kb(adjust, month, days)
+        await message.answer(
+            text='Ближайшие свободные даты:',
+            reply_markup=keyboard
+        )
 
 
 @dp.callback_query(lambda callback: callback.data in digital_of_month)
