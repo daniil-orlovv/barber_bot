@@ -1,5 +1,4 @@
-from aiogram.types import (KeyboardButton, InlineKeyboardButton,
-                           InlineKeyboardMarkup)
+from aiogram.types import (KeyboardButton, InlineKeyboardButton)
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
 LEXICON: dict[str, str] = {
