@@ -11,7 +11,7 @@ from config import location, TIME, PHONE, ADDRESS
 from keyboards import (button_contacts, button_sign_up, url_button,
                        create_keyboards, create_inline_kb,
                        times)
-from api import get_free_date, get_free_time, get_free_services
+from api import get_free_date, get_free_time, get_free_services, get_free_staff
 
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN', default='bot_token')
@@ -25,8 +25,8 @@ keyboard = ReplyKeyboardMarkup(keyboard=[[button_contacts, button_sign_up]],
 sigh_up_keyboard = InlineKeyboardMarkup(inline_keyboard=[[url_button]])
 
 
-# Этот хэндлер будет срабатывать на команду "/start"
-@dp.message(Command(commands=["start"]))
+# Этот хэндлер будет срабатывать на команду '/start'
+@dp.message(Command(commands=['start']))
 async def process_start_command(message: Message):
     await message.answer(
         text='Привет!\nЯ бот Максуда!'
@@ -41,18 +41,36 @@ async def command_contacts(message: Message):
         location.latitude,
         location.longitude
     )
-    await message.answer(f"{ADDRESS}\n{TIME}\n{PHONE}")
+    await message.answer(f'{ADDRESS}\n{TIME}\n{PHONE}')
 
 
 @dp.message(F.text == 'Записаться')
 async def command_sign_up_test(message: Message):
     await message.answer(
-        text='Нажмите на кнопку:',
+        text='Выберите действие:',
         reply_markup=create_keyboards(
             2,
-            "Выбрать дату и время",
-            "Выбрать услугу",
-            "Отменить запись")
+            'Выбрать мастера',
+            'Выбрать дату и время',
+            'Выбрать услугу',
+            'Отменить запись')
+        )
+
+
+@dp.message(F.text == 'Выбрать мастера')
+async def send_free_staffs(message: Message):
+    free_staffs = get_free_staff()
+    adjust = (2, 2, 2)
+    keyboard_inline = create_inline_kb(adjust, 'staff', *free_staffs)
+    await message.answer(
+        text='Свободные сотрудники:',
+        reply_markup=keyboard_inline
+    )
+    await message.answer(
+        text='Выбери действие:',
+        reply_markup=create_keyboards(
+            2,
+            'Отменить запись')
         )
 
 
@@ -70,6 +88,12 @@ async def command_sign_up_time(message: Message):
             text='Ближайшие свободные даты:',
             reply_markup=keyboard
         )
+        await message.answer(
+            text='Выбери действие:',
+            reply_markup=create_keyboards(
+                2,
+                'Отменить запись')
+        )
 
 
 @dp.callback_query(lambda callback: callback.data.startswith('1'))
@@ -82,11 +106,11 @@ async def send_times(callback: types.CallbackQuery):
     keyboard_times = create_inline_kb(adjust, 'time', *params)
     keyboard_cancel = create_keyboards(1, 'Отменить запись')
     await callback.message.answer(
-        text="Выберите доступное время:",
+        text='Выберите доступное время:',
         reply_markup=keyboard_times
     )
     await callback.message.answer(
-        text='Вы можете отменить запись:',
+        text='Выбери действие:',
         reply_markup=keyboard_cancel
     )
 
@@ -99,11 +123,11 @@ async def send_services(callback: types.CallbackQuery):
     keyboard_times = create_inline_kb(adjust, 'service', *free_services)
     keyboard_cancel = create_keyboards(1, 'Отменить запись')
     await callback.message.answer(
-        text="Выберите услугу:",
+        text='Выберите услугу:',
         reply_markup=keyboard_times
     )
     await callback.message.answer(
-        text='Вы можете отменить запись:',
+        text='Выбери действие:',
         reply_markup=keyboard_cancel
     )
 
@@ -111,7 +135,7 @@ async def send_services(callback: types.CallbackQuery):
 @dp.callback_query(lambda callback: callback.data in times)
 async def send_answer_order(callback: types.CallbackQuery):
     await callback.message.answer(
-        text="Отлично, вы записаны!",
+        text='Отлично, вы записаны!',
         reply_markup=keyboard
     )
 
@@ -123,11 +147,11 @@ async def command_services(message: Message):
     keyboard_times = create_inline_kb(adjust, 'service', *free_services)
     keyboard_cancel = create_keyboards(1, 'Отменить запись')
     await message.answer(
-        text="Выберите услугу:",
+        text='Выберите услугу:',
         reply_markup=keyboard_times
     )
     await message.answer(
-        text='Вы можете отменить запись:',
+        text='Выбери действие:',
         reply_markup=keyboard_cancel
     )
 
