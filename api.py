@@ -1,12 +1,18 @@
+import os
 import requests
+from dotenv import load_dotenv
+from config import BASE_URL
 
+load_dotenv()
+PARTNER_TOKEN = os.getenv('PARTNER_TOKEN', default='partner_key')
+USER_TOKEN = os.getenv('USER_TOKEN', default='user_token')
 
 
 company_id = 977067
 staff_id = 2933362
 url = 'https://api.yclients.com/api/v1/book_record/977067/'
 headers = {
-    'Authorization': 'Bearer 2k3ub5wjf96f8fytz6eu, User ea1aa4b4bbe452623b8098776499b52d',
+    'Authorization': f'Bearer {PARTNER_TOKEN}, User {USER_TOKEN}',
     'Accept': 'application/vnd.api.v2+json'
 }
 # data = {
@@ -43,7 +49,7 @@ headers = {
 
 
 def get_free_date():
-    url = f'https://api.yclients.com/api/v1/book_dates/{company_id}?staff_id={staff_id}'
+    url = f'{BASE_URL}/book_dates/{company_id}?staff_id={staff_id}'
     response = requests.get(url, headers=headers)
     response_json = response.json()
 
@@ -59,7 +65,7 @@ def get_free_date():
 
 
 def get_free_time(date):
-    url = f'https://api.yclients.com/api/v1/book_times/{company_id}/{staff_id}/{date}?'
+    url = f'{BASE_URL}/book_times/{company_id}/{staff_id}/{date}?'
     response = requests.get(url, headers=headers)
     response_json = response.json()
 
@@ -72,7 +78,7 @@ def get_free_time(date):
 
 
 def get_free_services():
-    url = f'https://api.yclients.com/api/v1/book_services/{company_id}?staff_id={staff_id}'
+    url = f'{BASE_URL}/book_services/{company_id}?staff_id={staff_id}'
     response = requests.get(url, headers=headers)
     response_json = response.json()
     if "data" in response_json:
