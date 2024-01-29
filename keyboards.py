@@ -56,7 +56,7 @@ def create_inline_kb(adjust, type, *args, **kwargs):
             for day in args[1]:
                 buttons.append(InlineKeyboardButton(
                             text=day,
-                            callback_data=f"{args[0]}_{day}"
+                            callback_data=f'{args[0]}_{day}'
                 ))
             label_button.append(InlineKeyboardButton(
                         text=named_month,
@@ -91,7 +91,21 @@ def create_inline_kb(adjust, type, *args, **kwargs):
             for service in args:
                 buttons.append(InlineKeyboardButton(
                             text=service,
-                            callback_data=service
+                            callback_data=f'service_{service}'
+                ))
+        if kwargs:
+            for button, text in kwargs.items():
+                buttons.append(InlineKeyboardButton(
+                    text=text,
+                    callback_data=button))
+
+    if type == 'staff':
+
+        if args:
+            for staff in args:
+                buttons.append(InlineKeyboardButton(
+                            text=staff,
+                            callback_data=f'staff_{staff}'
                 ))
         if kwargs:
             for button, text in kwargs.items():
