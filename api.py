@@ -48,13 +48,29 @@ headers = {
 # print(response.text)
 
 
+def get_free_staff():
+    url = f'{BASE_URL}/company/{company_id}/staff/'
+    response = requests.get(url, headers=headers)
+    response_json = response.json()
+    names = []
+
+    if 'data' in response_json:
+        data = response_json['data']
+        for item in data:
+            names.append(item.get('name'))
+
+    return names
+
+print(get_free_staff())
+
+
 def get_free_date():
     url = f'{BASE_URL}/book_dates/{company_id}?staff_id={staff_id}'
     response = requests.get(url, headers=headers)
     response_json = response.json()
 
-    if "data" in response_json and "booking_days" in response_json["data"]:
-        booking_days = response_json["data"]["booking_days"]
+    if 'data' in response_json and 'booking_days' in response_json['data']:
+        booking_days = response_json['data']['booking_days']
         quoted_dict = {
             key: [
                 str(item) for item in value
@@ -69,7 +85,7 @@ def get_free_time(date):
     response = requests.get(url, headers=headers)
     response_json = response.json()
 
-    if "data" in response_json:
+    if 'data' in response_json:
         data = response_json['data']
         free_times = []
         for item in data:
@@ -81,7 +97,7 @@ def get_free_services():
     url = f'{BASE_URL}/book_services/{company_id}?staff_id={staff_id}'
     response = requests.get(url, headers=headers)
     response_json = response.json()
-    if "data" in response_json:
+    if 'data' in response_json:
         data = response_json['data']
         free_services = []
         services = data.get('services')
