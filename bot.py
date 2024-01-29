@@ -1,15 +1,20 @@
+import os
+
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.filters import Command
 from aiogram.types import Message, ReplyKeyboardMarkup
 from aiogram import types
+from dotenv import load_dotenv
 
-from config import BOT_TOKEN, location, TIME, PHONE, ADDRESS
+from config import location, TIME, PHONE, ADDRESS
 from keyboards import (button_contacts, button_sign_up, url_button,
                        create_keyboards, create_inline_kb,
                        times)
 from api import get_free_date, get_free_time, get_free_services
 
+load_dotenv()
+BOT_TOKEN = os.getenv('BOT_TOKEN', default='bot_token')
 
 # Создаем объекты бота и диспетчера
 bot = Bot(token=BOT_TOKEN)
