@@ -61,8 +61,6 @@ def get_free_staff():
 
     return names
 
-print(get_free_staff())
-
 
 def get_free_date():
     url = f'{BASE_URL}/book_dates/{company_id}?staff_id={staff_id}'
