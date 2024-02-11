@@ -12,9 +12,9 @@ from dotenv import load_dotenv
 
 from config import location, TIME, PHONE, ADDRESS
 from keyboards import (button_contacts, button_sign_up, url_button,
-                       create_inline_kb, times, current_year, return_month)
+                       create_inline_kb, current_year, return_month)
 from api import get_free_date, get_free_time, get_free_services, get_free_staff
-from utils import check_date, get_state_data
+from utils import check_date
 
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN', default='bot_token')
@@ -165,7 +165,10 @@ async def send_choose_time(callback: types.CallbackQuery, state: FSMContext):
         lambda callback: callback.data in get_free_time(
             f'{current_year}-{data[callback.from_user.id]["date"]}')
 )
-async def send_choise_of_user(callback: types.CallbackQuery, state: FSMContext):
+async def send_choise_of_user(
+    callback: types.CallbackQuery,
+    state: FSMContext
+):
 
     print(f'{callback.from_user.full_name} выбрал время: {callback.data}')
     await state.update_data(time=callback.data)
@@ -223,7 +226,6 @@ async def process_accept(callback: types.CallbackQuery, state: FSMContext):
     )
     # Сбрасываем состояние и очищаем данные, полученные внутри состояний
     await state.clear()
-
 
 
 @dp.message(F.text == 'Отменить запись')
