@@ -101,5 +101,4 @@ def get_free_services():
         services = data.get('services')
         for service in services:
             free_services.append(service.get('title'))
-    print(free_services)
     return free_services
