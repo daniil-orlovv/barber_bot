@@ -1,10 +1,13 @@
 import os
+from typing import Union
 
-from aiogram import Bot, Dispatcher, F
-from aiogram.types import InlineKeyboardMarkup
-from aiogram.filters import Command
+from aiogram import Bot, Dispatcher, F, types
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters import Command, StateFilter
 from aiogram.types import Message, ReplyKeyboardMarkup
-from aiogram import types
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup, default_state
+from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
 from config import location, TIME, PHONE, ADDRESS
@@ -12,15 +15,28 @@ from keyboards import (button_contacts, button_sign_up, url_button,
                        create_keyboards, create_inline_kb,
                        times)
 from api import get_free_date, get_free_time, get_free_services, get_free_staff
+from utils import check_date
 
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN', default='bot_token')
 
-# Создаем объекты бота и диспетчера
+storage = MemoryStorage()
+
 bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
+dp = Dispatcher(storage=storage)
 keyboard = ReplyKeyboardMarkup(keyboard=[[button_contacts, button_sign_up]],
                                resize_keyboard=True)
+
+
+class SignUpFSM(StatesGroup):
+    staff = State()
+    service = State()
+    date = State()
+    time = State()
+
+
+data: dict[int, dict[str, Union[str, int, bool]]] = {}
+
 
 sigh_up_keyboard = InlineKeyboardMarkup(inline_keyboard=[[url_button]])
 
@@ -44,91 +60,120 @@ async def command_contacts(message: Message):
     await message.answer(f'{ADDRESS}\n{TIME}\n{PHONE}')
 
 
-@dp.message(F.text == 'Записаться')
-async def command_sign_up_test(message: Message):
-    await message.answer(
-        text='Выберите действие:',
-        reply_markup=create_keyboards(
-            2,
-            'Выбрать мастера',
-            'Выбрать дату и время',
-            'Выбрать услугу',
-            'Отменить запись')
-        )
+@dp.message(F.text == 'Записаться', StateFilter(default_state))
+async def command_sign_up(message: Message, state: FSMContext):
 
-
-@dp.message(F.text == 'Выбрать мастера')
-async def send_free_staffs(message: Message):
     free_staffs = get_free_staff()
     adjust = (2, 2, 2)
     keyboard_inline = create_inline_kb(adjust, 'staff', *free_staffs)
+
     await message.answer(
-        text='Свободные сотрудники:',
+        text='Выбери мастера:',
         reply_markup=keyboard_inline
     )
-    await message.answer(
-        text='Выбери действие:',
-        reply_markup=create_keyboards(
-            2,
-            'Отменить запись')
-        )
+    await state.set_state(SignUpFSM.staff)
 
 
-@dp.message(F.text == 'Выбрать дату и время')
-async def command_sign_up_time(message: Message):
+@dp.callback_query(lambda callback: callback.data in get_free_staff())
+async def send_choose_service(callback: types.CallbackQuery, state: FSMContext):
+
+    print(f'Значение нажатой кнопки: {callback.data}')
+    await state.update_data(staff=callback.data)
+
+    adjust = (2, 2, 2)
+    free_services = get_free_services()
+    keyboard_services = create_inline_kb(adjust, 'service', *free_services)
+
+    await callback.message.answer(
+        text=(f"Ваш мастер: {callback.data}\n"
+              f"Выбери услугу:"),
+        reply_markup=keyboard_services
+    )
+    await state.set_state(SignUpFSM.service)
+
+
+@dp.callback_query(lambda callback: callback.data in get_free_services())
+async def send_choose_date(callback: types.CallbackQuery, state: FSMContext):
+
+    print(f'Значение нажатой кнопки: {callback.data}')
+    await state.update_data(service=callback.data)
+    state_data = await state.get_data()
+    staff = state_data['staff']
+
+    await callback.message.answer(
+        text=(f'Ваш мастер: {staff}\n'
+              f'Ваша услуга: {callback.data}\n'
+              f'Выбери дату:')
+    )
+
     free_days = get_free_date()
-    count_months = len(free_days)
+    print(f'Количество месяцев: {free_days}')
+    print(f'Первый номер месяца: {list(free_days.keys())[0]}')
     adjust = (1, 7, 7, 7, 7, 7)
-    for i in range(0, count_months):
-        month = str(i + 1)
-        days = free_days.get(month)
-        params = (month, days)
-        keyboard = create_inline_kb(adjust, 'date', *params)
-        await message.answer(
-            text='Ближайшие свободные даты:',
-            reply_markup=keyboard
-        )
-        await message.answer(
-            text='Выбери действие:',
-            reply_markup=create_keyboards(
-                2,
-                'Отменить запись')
+    for i in range(0, len(free_days)):
+        month_number = str(list(free_days.keys())[i])
+        print(f'Номер месяца:{month_number}')
+        days = free_days.get(month_number)
+        print(f'Дни в месяце: {days}')
+        params = (month_number, days)
+        print(params)
+        keyboard_date = create_inline_kb(adjust, 'date', *params)
+
+        await callback.message.answer(
+            text='Выбери дату:',
+            reply_markup=keyboard_date
         )
 
 
-@dp.callback_query(lambda callback: callback.data.startswith('1'))
-async def send_times(callback: types.CallbackQuery):
+@dp.callback_query(lambda callback: check_date(callback.data))
+async def send_choose_time(callback: types.CallbackQuery, state: FSMContext):
+
+    print(f'Значение нажатой кнопки: {callback.data}')
+    await state.update_data(date=callback.data)
+    state_data = await state.get_data()
+    print(callback.data)
+    staff = state_data['staff']
+    service = state_data['servie']
+
     month, day = callback.data.split('_')
     date = f'2024-01-{day}'
     adjust = (1, 7, 7, 7, 7, 7)
     free_times = get_free_time(date)
     params = [date, free_times]
+    print(params)
     keyboard_times = create_inline_kb(adjust, 'time', *params)
-    keyboard_cancel = create_keyboards(1, 'Отменить запись')
+
     await callback.message.answer(
-        text='Выберите доступное время:',
+        text=(f'Ваш мастер: {staff}\n'
+              f'Ваша услуга {service}\n'
+              f'Дата: {callback.data}\n'
+              f'Выбери время:'),
         reply_markup=keyboard_times
     )
-    await callback.message.answer(
-        text='Выбери действие:',
-        reply_markup=keyboard_cancel
+
+    
+@dp.callback_query(lambda callback: callback.data in get_free_time(f'2024-02-11'))
+async def send_choise_of_user(callback: types.CallbackQuery):
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[InlineKeyboardButton(
+                            text='Подтвердить',
+                            callback_data='accept'
+                       ),
+                         InlineKeyboardButton(
+                            text='Отменить',
+                            callback_data='cancel'
+                         )
+        ]
     )
 
-
-@dp.callback_query(lambda callback: callback.data.startswith('time_'))
-async def send_services(callback: types.CallbackQuery):
-    time = callback.data.split('_')[1]
-    adjust = (2, 2, 2)
-    free_services = get_free_services()
-    keyboard_times = create_inline_kb(adjust, 'service', *free_services)
-    keyboard_cancel = create_keyboards(1, 'Отменить запись')
     await callback.message.answer(
-        text='Выберите услугу:',
-        reply_markup=keyboard_times
-    )
-    await callback.message.answer(
-        text='Выбери действие:',
-        reply_markup=keyboard_cancel
+        text=(f'Ваш мастер: {callback.data}'
+              f'Ваша услуга: {...}'
+              f'Дата: {...}'
+              f'Время: {...}'
+              f'Все верно?'),
+        reply_markup=keyboard
     )
 
 
@@ -137,22 +182,6 @@ async def send_answer_order(callback: types.CallbackQuery):
     await callback.message.answer(
         text='Отлично, вы записаны!',
         reply_markup=keyboard
-    )
-
-
-@dp.message(F.text == 'Выбрать услугу')
-async def command_services(message: Message):
-    adjust = (2, 2, 2)
-    free_services = get_free_services()
-    keyboard_times = create_inline_kb(adjust, 'service', *free_services)
-    keyboard_cancel = create_keyboards(1, 'Отменить запись')
-    await message.answer(
-        text='Выберите услугу:',
-        reply_markup=keyboard_times
-    )
-    await message.answer(
-        text='Выбери действие:',
-        reply_markup=keyboard_cancel
     )
 
 
