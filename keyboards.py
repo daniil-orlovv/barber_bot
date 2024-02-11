@@ -2,8 +2,6 @@ import datetime
 
 from aiogram.types import (KeyboardButton, InlineKeyboardButton)
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
-from aiogram_dialog.widgets.text import Const
-from aiogram_dialog.widgets.kbd import Button, Group
 
 LEXICON: dict[str, str] = {
     'btn_1': 'Кнопка 1'}
@@ -13,13 +11,6 @@ current_year = datetime.datetime.now().year
 
 button_contacts = KeyboardButton(text='Контакты')
 button_sign_up = KeyboardButton(text='Записаться')
-digital_of_month = (
-    '1', '2', '3', '4', '5', '6', '7',
-    '8', '9', '10', '11', '12', '13', '14',
-    '15', '16', '17', '18', '19', '20', '21',
-    '22', '23', '24', '25', '26', '27', '28',
-    '29', '30', '31'
-)
 
 times = (
     '10:00', '11:00', '15:00'
