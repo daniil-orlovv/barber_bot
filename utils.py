@@ -1,6 +1,4 @@
-from aiogram.fsm.context import FSMContext
-
-from api import get_free_date, get_free_time
+from api import get_free_date
 
 
 def check_date(date_str: str) -> bool:
