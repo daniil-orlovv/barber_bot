@@ -1,9 +1,15 @@
+import datetime
+
 from aiogram.types import (KeyboardButton, InlineKeyboardButton)
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
+from aiogram_dialog.widgets.text import Const
+from aiogram_dialog.widgets.kbd import Button, Group
 
 LEXICON: dict[str, str] = {
     'btn_1': 'Кнопка 1'}
 
+
+current_year = datetime.datetime.now().year
 
 button_contacts = KeyboardButton(text='Контакты')
 button_sign_up = KeyboardButton(text='Записаться')
@@ -53,14 +59,15 @@ def create_inline_kb(adjust, type, *args, **kwargs):
         named_month = return_month(args[0])
 
         if args:
-            for day in args[1]:
+            month_number, days = args
+            for day in days:
                 buttons.append(InlineKeyboardButton(
-                            text=day,
-                            callback_data=f'{args[0]}_{day}'
+                    text=day,
+                    callback_data=f'{month_number}-{day}'
                 ))
-            label_button.append(InlineKeyboardButton(
-                        text=named_month,
-                        callback_data=named_month
+        label_button.append(InlineKeyboardButton(
+                    text=named_month,
+                    callback_data=named_month
             ))
         if kwargs:
             for button, text in kwargs.items():
@@ -73,7 +80,7 @@ def create_inline_kb(adjust, type, *args, **kwargs):
             for time in args[1]:
                 buttons.append(InlineKeyboardButton(
                             text=time,
-                            callback_data=f'time_{time}'
+                            callback_data=f'{time}'
                 ))
             label_button.append(InlineKeyboardButton(
                         text=args[0],
@@ -91,7 +98,7 @@ def create_inline_kb(adjust, type, *args, **kwargs):
             for service in args:
                 buttons.append(InlineKeyboardButton(
                             text=service,
-                            callback_data=f'service_{service}'
+                            callback_data=f'{service}'
                 ))
         if kwargs:
             for button, text in kwargs.items():
@@ -105,8 +112,9 @@ def create_inline_kb(adjust, type, *args, **kwargs):
             for staff in args:
                 buttons.append(InlineKeyboardButton(
                             text=staff,
-                            callback_data=f'staff_{staff}'
+                            callback_data=f'{staff}'
                 ))
+
         if kwargs:
             for button, text in kwargs.items():
                 buttons.append(InlineKeyboardButton(
@@ -115,6 +123,4 @@ def create_inline_kb(adjust, type, *args, **kwargs):
 
     kb_builder.add(*label_button, *buttons)
     kb_builder.adjust(*adjust)
-    kb = kb_builder.as_markup(resize_keyboard=True)
-    print(kb)
     return kb_builder.as_markup(resize_keyboard=True)
