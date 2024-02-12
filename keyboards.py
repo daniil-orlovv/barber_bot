@@ -1,7 +1,7 @@
 import datetime
 
 from aiogram.types import (KeyboardButton, InlineKeyboardButton)
-from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from utils import return_month
 
@@ -32,11 +32,6 @@ def create_inline_kb(adjust, type, *args, **kwargs):
                     text=named_month,
                     callback_data=named_month
             ))
-        if kwargs:
-            for button, text in kwargs.items():
-                buttons.append(InlineKeyboardButton(
-                    text=text,
-                    callback_data=button))
 
     if type == 'time':
         if args:
@@ -49,11 +44,6 @@ def create_inline_kb(adjust, type, *args, **kwargs):
                         text=args[0],
                         callback_data=args[0]
             ))
-        if kwargs:
-            for button, text in kwargs.items():
-                buttons.append(InlineKeyboardButton(
-                    text=text,
-                    callback_data=button))
 
     if type == 'service':
 
@@ -63,11 +53,6 @@ def create_inline_kb(adjust, type, *args, **kwargs):
                             text=service,
                             callback_data=f'{service}'
                 ))
-        if kwargs:
-            for button, text in kwargs.items():
-                buttons.append(InlineKeyboardButton(
-                    text=text,
-                    callback_data=button))
 
     if type == 'staff':
 
@@ -77,12 +62,6 @@ def create_inline_kb(adjust, type, *args, **kwargs):
                             text=staff,
                             callback_data=f'{staff}'
                 ))
-
-        if kwargs:
-            for button, text in kwargs.items():
-                buttons.append(InlineKeyboardButton(
-                    text=text,
-                    callback_data=button))
 
     kb_builder.add(*label_button, *buttons)
     kb_builder.adjust(*adjust)
