@@ -35,6 +35,10 @@ class SignUpFSM(StatesGroup):
     date = State()
     time = State()
     check_data = State()
+    name = State()
+    phone = State()
+    email = State()
+    comment = State()
 
 
 data: dict[int, dict[str, Union[str, int, bool]]] = {}
@@ -94,7 +98,7 @@ async def send_choose_service(
     keyboard_services = create_inline_kb(adjust, 'service', *free_services)
 
     await callback.message.answer(
-        text=(f"Ваш мастер: {callback.data}\n"
+        text=(f"Ваш мастер: {callback.data}\n\n"
               f"Выбери услугу:"),
         reply_markup=keyboard_services
     )
@@ -114,7 +118,7 @@ async def send_choose_date(callback: types.CallbackQuery, state: FSMContext):
 
     await callback.message.answer(
         text=(f'Ваш мастер: {staff}\n'
-              f'Ваша услуга: {callback.data}\n'
+              f'Ваша услуга: {callback.data}\n\n'
               f'Выбери дату:')
     )
 
@@ -156,7 +160,7 @@ async def send_choose_time(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(
         text=(f'Ваш мастер: {staff}\n'
               f'Ваша услуга {service}\n'
-              f'Дата: {callback.data}\n'
+              f'Дата: {callback.data}\n\n'
               f'Выбери время:'),
         reply_markup=keyboard_times
     )
@@ -183,7 +187,7 @@ async def send_choise_of_user(
     print(f'Запись {callback.from_user.full_name}:\n'
           f'Мастер: {staff}\n'
           f'Услуга: {service}\n'
-          f'Дата: {norm_date[0]} {return_month(norm_date[1])} {current_year}\n'
+          f'Дата: {norm_date[0]} {return_month(norm_date[1])} {current_year}\n\n'
           f'Время: {callback.data}')
 
     keyboard = InlineKeyboardMarkup(
@@ -196,6 +200,12 @@ async def send_choise_of_user(
                 InlineKeyboardButton(
                     text='Отменить',
                     callback_data='cancel'
+                    )
+            ],
+            [
+                InlineKeyboardButton(
+                    text='Изменить',
+                    callback_data='edit'
                     )
             ]
         ]
@@ -225,21 +235,53 @@ async def process_cancel(callback: types.CallbackQuery, state: FSMContext):
 @dp.callback_query(lambda callback: callback.data == 'accept',
                    StateFilter(SignUpFSM.check_data))
 async def process_accept(callback: types.CallbackQuery, state: FSMContext):
+
     await callback.message.answer(
-        text='Спасибо, вы записаны!'
-    )
+        text='Спасибо, теперь введите свое имя:')
     # Сбрасываем состояние и очищаем данные, полученные внутри состояний
     data[callback.from_user.id] = await state.get_data()
     print(data[callback.from_user.id])
+    await state.set_state(SignUpFSM.name)
+
+
+@dp.message(StateFilter(SignUpFSM.name), F.text.isalpha())
+async def process_name_sent(message: Message, state: FSMContext):
+    await state.update_data(name=message.text)
+    await message.answer(text='А теперь введите ваш телефон в формате +7 777 777-77-77:')
+    await state.set_state(SignUpFSM.phone)
+
+
+@dp.message(StateFilter(SignUpFSM.phone))
+async def process_phone_sent(message: Message, state: FSMContext):
+    await state.update_data(phone=message.text)
+    await message.answer(text='Введите ваш email в формате mail@mail.ru:')
+    await state.set_state(SignUpFSM.email)
+
+
+@dp.message(StateFilter(SignUpFSM.email))
+async def process_email_sent(message: Message, state: FSMContext):
+    await state.update_data(email=message.text)
+    await message.answer(text='Возможно, есть какие-то комментарии, укажите их:')
+    await state.set_state(SignUpFSM.comment)
+
+
+@dp.message(StateFilter(SignUpFSM.comment))
+async def process_comment_sent(message: Message, state: FSMContext):
+    await state.update_data(comment=message.text)
+    await message.answer(text='Спасибо!')
+
+    data[message.from_user.id] = await state.get_data()
     await state.clear()
+    print(data)
 
 
 @dp.message(F.text == 'Отменить запись')
-async def command_cancel(message: Message):
+async def command_cancel(message: Message, state: FSMContext):
     await message.answer(
-        text='Выбери дейстие:',
+        text='Запись отменена!\n\nВыбери дейстие:',
         reply_markup=keyboard
     )
+    await state.clear()
 
 
 if __name__ == '__main__':
