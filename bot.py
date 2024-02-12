@@ -11,8 +11,9 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
 from config import location, TIME, PHONE, ADDRESS
-from keyboards import (button_contacts, button_sign_up, url_button,
-                       create_inline_kb, current_year, return_month)
+from keyboards import (button_contacts, button_sign_up, button_cancel,
+                       url_button, create_inline_kb, current_year,
+                       return_month)
 from api import get_free_date, get_free_time, get_free_services, get_free_staff
 from utils import check_date
 
@@ -23,7 +24,8 @@ storage = MemoryStorage()
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=storage)
-keyboard = ReplyKeyboardMarkup(keyboard=[[button_contacts, button_sign_up]],
+keyboard = ReplyKeyboardMarkup(keyboard=[[button_contacts, button_sign_up],
+                                         [button_cancel]],
                                resize_keyboard=True)
 
 
@@ -32,6 +34,7 @@ class SignUpFSM(StatesGroup):
     service = State()
     date = State()
     time = State()
+    check_data = State()
 
 
 data: dict[int, dict[str, Union[str, int, bool]]] = {}
@@ -206,10 +209,11 @@ async def send_choise_of_user(
               f'Все верно?'),
         reply_markup=keyboard
     )
+    await state.set_state(SignUpFSM.check_data)
 
 
-@dp.callback_query(~StateFilter(default_state),
-                   lambda callback: callback.data == 'cancel')
+@dp.callback_query(lambda callback: callback.data == 'cancel',
+                   StateFilter(SignUpFSM.check_data))
 async def process_cancel(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(
         text='Вы отменили процесс записи.'
@@ -218,13 +222,15 @@ async def process_cancel(callback: types.CallbackQuery, state: FSMContext):
     await state.clear()
 
 
-@dp.callback_query(~StateFilter(default_state),
-                   lambda callback: callback.data == 'accept')
+@dp.callback_query(lambda callback: callback.data == 'accept',
+                   StateFilter(SignUpFSM.check_data))
 async def process_accept(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(
         text='Спасибо, вы записаны!'
     )
     # Сбрасываем состояние и очищаем данные, полученные внутри состояний
+    data[callback.from_user.id] = await state.get_data()
+    print(data[callback.from_user.id])
     await state.clear()
 
 
