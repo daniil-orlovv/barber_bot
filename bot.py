@@ -12,9 +12,10 @@ from dotenv import load_dotenv
 
 from config import location, TIME, PHONE, ADDRESS
 from keyboards import (button_contacts, button_sign_up, button_cancel,
-                       url_button, create_inline_kb, current_year,
+                       create_inline_kb, current_year,
                        return_month)
-from api import get_free_date, get_free_time, get_free_services, get_free_staff
+from api import (get_free_date, get_free_time, get_free_services,
+                 get_free_staff, create_session_api)
 from utils import check_date
 
 load_dotenv()
@@ -39,12 +40,10 @@ class SignUpFSM(StatesGroup):
     phone = State()
     email = State()
     comment = State()
+    accept_session = State()
 
 
 data: dict[int, dict[str, Union[str, int, bool]]] = {}
-
-
-sigh_up_keyboard = InlineKeyboardMarkup(inline_keyboard=[[url_button]])
 
 
 # Этот хэндлер будет срабатывать на команду '/start'
@@ -222,23 +221,21 @@ async def send_choise_of_user(
     await state.set_state(SignUpFSM.check_data)
 
 
-@dp.callback_query(lambda callback: callback.data == 'cancel',
-                   StateFilter(SignUpFSM.check_data))
+@dp.callback_query(StateFilter(SignUpFSM.check_data),
+                   lambda callback: callback.data == 'cancel')
 async def process_cancel(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(
         text='Вы отменили процесс записи.'
     )
-    # Сбрасываем состояние и очищаем данные, полученные внутри состояний
     await state.clear()
 
 
-@dp.callback_query(lambda callback: callback.data == 'accept',
-                   StateFilter(SignUpFSM.check_data))
+@dp.callback_query(StateFilter(SignUpFSM.check_data),
+                   lambda callback: callback.data == 'accept')
 async def process_accept(callback: types.CallbackQuery, state: FSMContext):
 
     await callback.message.answer(
         text='Спасибо, теперь введите свое имя:')
-    # Сбрасываем состояние и очищаем данные, полученные внутри состояний
     data[callback.from_user.id] = await state.get_data()
     print(data[callback.from_user.id])
     await state.set_state(SignUpFSM.name)
@@ -266,13 +263,32 @@ async def process_email_sent(message: Message, state: FSMContext):
 
 
 @dp.message(StateFilter(SignUpFSM.comment))
-async def process_comment_sent(message: Message, state: FSMContext):
+async def create_session(message: Message, state: FSMContext):
+
+    adjust = (2, 2)
+    params = {'Подтвердить': 'accept',
+              'Отменить': 'cancel'}
+    keyboard = create_inline_kb(adjust, 'simple', **params)
+
     await state.update_data(comment=message.text)
-    await message.answer(text='Спасибо!')
+    await message.answer(text='Спасибо!\n\n Создать запись на сеанс?',
+                         reply_markup=keyboard)
 
     data[message.from_user.id] = await state.get_data()
-    await state.clear()
+    await state.set_state(SignUpFSM.accept_session)
     print(data)
+
+
+@dp.callback_query(StateFilter(SignUpFSM.accept_session),
+                   lambda callback: callback.data == 'accept')
+async def accept_session(callback: types.CallbackQuery, state: FSMContext):
+
+    data_for_request = data[callback.from_user.id]
+    result = await create_session_api(data_for_request)
+
+    await callback.answer(text='Запись создана!\n\n')
+    await state.clear()
+    print(f'Ответ API:{result}')
 
 
 @dp.message(F.text == 'Отменить запись')
