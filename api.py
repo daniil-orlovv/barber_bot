@@ -1,13 +1,16 @@
 import os
 import requests
+import datetime
+
 from dotenv import load_dotenv
 from config import BASE_URL
+
 
 load_dotenv()
 PARTNER_TOKEN = os.getenv('PARTNER_TOKEN', default='partner_key')
 USER_TOKEN = os.getenv('USER_TOKEN', default='user_token')
 
-
+current_year = datetime.datetime.now().year
 company_id = 977067
 staff_id = 2933362
 url = 'https://api.yclients.com/api/v1/book_record/977067/'
@@ -102,3 +105,32 @@ def get_free_services():
         for service in services:
             free_services.append(service.get('title'))
     return free_services
+
+
+async def create_session_api(data):
+
+    url = 'https://api.yclients.com/api/v1/book_record/{company_id}/'
+    data = {
+        "phone": data['phone'],
+        "fullname": data['name'],
+        "email": data['email'],
+        "code": "38829",
+        "comment": data['comment'],
+        "type": "mobile",
+        "notify_by_sms": 6,
+        "notify_by_email": 24,
+        "api_id": "777",
+        "appointments": [
+            {
+                "id": 1,
+                "services": [
+                    14531077
+                ],
+                "staff_id": 2933362,
+                "datetime": f'{current_year}-{data["date"]}T{data["time"]}:00.000Z',
+            }
+        ]
+        }
+
+    response = requests.post(url, headers=headers, json=data)
+    print(response.text)
