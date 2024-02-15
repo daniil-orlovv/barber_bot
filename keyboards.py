@@ -18,6 +18,15 @@ def create_inline_kb(adjust, type, *args, **kwargs):
     buttons: list[InlineKeyboardButton] = []
     label_button: list[InlineKeyboardButton] = []
 
+    if type == 'simple':
+        if kwargs:
+            for name, callback_data in kwargs.items():
+                buttons.append(InlineKeyboardButton(
+                    text=name,
+                    callback_data=callback_data
+                ))
+
+
     if type == 'date':
         named_month = return_month(args[0])
 
@@ -62,7 +71,7 @@ def create_inline_kb(adjust, type, *args, **kwargs):
                             text=staff,
                             callback_data=f'{staff}'
                 ))
-
+    print(buttons)
     kb_builder.add(*label_button, *buttons)
     kb_builder.adjust(*adjust)
     return kb_builder.as_markup(resize_keyboard=True)
