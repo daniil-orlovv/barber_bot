@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Integer, String, Date, DateTime
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime
 
 from bot import engine
 
