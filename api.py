@@ -11,7 +11,7 @@ PARTNER_TOKEN = os.getenv('PARTNER_TOKEN', default='partner_key')
 USER_TOKEN = os.getenv('USER_TOKEN', default='user_token')
 
 current_year = datetime.datetime.now().year
-company_id = 977067
+company_id = 1004927
 staff_id = 2933362
 url = 'https://api.yclients.com/api/v1/book_record/977067/'
 headers = {
@@ -55,14 +55,18 @@ def get_free_staff():
     url = f'{BASE_URL}/company/{company_id}/staff/'
     response = requests.get(url, headers=headers)
     response_json = response.json()
-    names = []
+    staffs = {}
 
     if 'data' in response_json:
         data = response_json['data']
         for item in data:
-            names.append(item.get('name'))
+            staffs[item.get('id')] = item.get('name')
 
-    return names
+
+    return staffs
+
+def get_one_staff(name):
+
 
 
 def get_free_date():
@@ -110,7 +114,7 @@ def get_free_services():
 async def create_session_api(data):
 
     url = 'https://api.yclients.com/api/v1/book_record/{company_id}/'
-    data = {
+    data_for_request = {
         "phone": data['phone'],
         "fullname": data['name'],
         "email": data['email'],
@@ -132,5 +136,5 @@ async def create_session_api(data):
         ]
         }
 
-    response = requests.post(url, headers=headers, json=data)
+    response = requests.post(url, headers=headers, json=data_for_request)
     print(response.text)
