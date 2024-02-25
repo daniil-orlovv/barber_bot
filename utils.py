@@ -1,4 +1,5 @@
 from api import get_free_date
+from models import DataForRecord
 
 
 def check_date(date_str: str) -> bool:
@@ -17,3 +18,17 @@ def return_month(value):
         '10': 'Октября', '11': 'Ноября', '12': 'Декабря'
     }
     return months_key.get(value)
+
+
+def create_object_for_db(kwargs):
+    object_db = DataForRecord(
+        staff=kwargs['staff'],
+        service=kwargs['service'],
+        date=kwargs['date'],
+        time=kwargs['time'],
+        name=kwargs['name'],
+        phone=kwargs['phone'],
+        email=kwargs['email'],
+        comment=kwargs['comment']
+    )
+    return object_db
