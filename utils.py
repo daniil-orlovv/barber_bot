@@ -1,14 +1,38 @@
-from api import get_free_date
+import datetime
+
+from aiogram.fsm.context import FSMContext
+
+from api import get_free_date, get_free_time
 from models import DataForRecord
 
 
-def check_date(date_str: str) -> bool:
+async def check_date_for_staff(date_str: str, state: FSMContext) -> bool:
+    state_data = await state.get_data()
+    staff_id = state_data['staff']
+
     month, day = date_str.split('-')
-    free_days = get_free_date()  # Получаем доступные дни
+    free_days = get_free_date(staff_id)  # Получаем доступные дни
 
     if month in free_days and day in free_days[month]:
         return True
     return False
+
+
+async def check_free_services_for_staff(callback, state, api):
+
+    state_data = await state.get_data()
+    staffs = state_data['staff']
+    free_staffs = api(staffs)
+    return callback.data in free_staffs
+
+
+async def check_free_time_for_staff(callback, state):
+
+    state_data = await state.get_data()
+    date = state_data['date']
+    staff_id = state_data['staff']
+
+    return callback.data in get_free_time(date, staff_id)
 
 
 def return_month(value):
@@ -21,6 +45,12 @@ def return_month(value):
 
 
 def create_object_for_db(kwargs):
+
+    time = kwargs['time']
+    month_day = kwargs['date']
+    current_year = datetime.datetime.now().year
+    date_for_api = f'{current_year}-{month_day}T{time}:00.000Z'
+
     object_db = DataForRecord(
         staff=kwargs['staff'],
         service=kwargs['service'],
