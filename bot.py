@@ -22,7 +22,8 @@ from utils import (check_date_for_staff, create_object_for_db,
                    check_free_services_for_staff, check_free_time_for_staff)
 from models import Base
 
-engine = create_engine("postgresql+psycopg2://admin:admin@localhost:5428/mydatabase")
+engine = create_engine(
+    "postgresql+psycopg2://admin:admin@localhost:5428/mydatabase")
 session = Session(bind=engine)
 Base.metadata.create_all(engine)
 
@@ -251,7 +252,8 @@ async def process_accept(callback: types.CallbackQuery, state: FSMContext):
 @dp.message(StateFilter(SignUpFSM.name), F.text.isalpha())
 async def process_name_sent(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
-    await message.answer(text='А теперь введите ваш телефон в формате +7 777 777-77-77:')
+    await message.answer(
+        text='А теперь введите ваш телефон в формате 79000000000:')
     await state.set_state(SignUpFSM.phone)
 
 
@@ -265,7 +267,8 @@ async def process_phone_sent(message: Message, state: FSMContext):
 @dp.message(StateFilter(SignUpFSM.email))
 async def process_email_sent(message: Message, state: FSMContext):
     await state.update_data(email=message.text)
-    await message.answer(text='Возможно, есть какие-то комментарии, укажите их:')
+    await message.answer(
+        text='Возможно, есть какие-то комментарии, укажите их:')
     await state.set_state(SignUpFSM.comment)
 
 
