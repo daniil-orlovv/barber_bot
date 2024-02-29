@@ -9,6 +9,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup, default_state
 from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 from config import location, TIME, PHONE, ADDRESS
 from keyboards import (button_contacts, button_sign_up, button_cancel,
@@ -16,7 +18,13 @@ from keyboards import (button_contacts, button_sign_up, button_cancel,
                        return_month)
 from api import (get_free_date, get_free_time, get_free_services,
                  get_free_staff, create_session_api)
-from utils import check_date
+from utils import (check_date_for_staff, create_object_for_db,
+                   check_free_services_for_staff, check_free_time_for_staff)
+from models import Base
+
+engine = create_engine("postgresql+psycopg2://admin:admin@localhost:5428/mydatabase")
+session = Session(bind=engine)
+Base.metadata.create_all(engine)
 
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN', default='bot_token')
@@ -71,7 +79,7 @@ async def command_sign_up(message: Message, state: FSMContext):
 
     free_staffs = get_free_staff()
     adjust = (2, 2, 2)
-    keyboard_inline = create_inline_kb(adjust, 'staff', *free_staffs)
+    keyboard_inline = create_inline_kb(adjust, 'staff', **free_staffs)
 
     await message.answer(
         text='Выбери мастера:',
@@ -81,7 +89,7 @@ async def command_sign_up(message: Message, state: FSMContext):
 
 
 @dp.callback_query(
-        lambda callback: callback.data in get_free_staff(),
+        lambda callback: callback.data in get_free_staff().values(),
         StateFilter(SignUpFSM.staff)
 )
 async def send_choose_service(
@@ -93,8 +101,8 @@ async def send_choose_service(
     await state.update_data(staff=callback.data)
 
     adjust = (2, 2, 2)
-    free_services = get_free_services()
-    keyboard_services = create_inline_kb(adjust, 'service', *free_services)
+    free_services = get_free_services(callback.data)
+    keyboard_services = create_inline_kb(adjust, 'service', **free_services)
 
     await callback.message.answer(
         text=(f"Ваш мастер: {callback.data}\n\n"
@@ -106,22 +114,23 @@ async def send_choose_service(
 
 @dp.callback_query(
         StateFilter(SignUpFSM.service),
-        lambda callback: callback.data in get_free_services()
+        lambda callback, state: check_free_services_for_staff(
+            callback, state, get_free_services)
 )
 async def send_choose_date(callback: types.CallbackQuery, state: FSMContext):
 
     print(f'{callback.from_user.full_name} выбрал услугу: {callback.data}')
     await state.update_data(service=callback.data)
     state_data = await state.get_data()
-    staff = state_data['staff']
+    staff_id = state_data['staff']
 
     await callback.message.answer(
-        text=(f'Ваш мастер: {staff}\n'
+        text=(f'Ваш мастер: {staff_id}\n'
               f'Ваша услуга: {callback.data}\n\n'
               f'Выбери дату:')
     )
 
-    free_days = get_free_date()
+    free_days = get_free_date(staff_id)
     adjust = (1, 7, 7, 7, 7, 7)
     for i in range(0, len(free_days)):
         month_number = str(list(free_days.keys())[i])
@@ -138,26 +147,26 @@ async def send_choose_date(callback: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query(
         StateFilter(SignUpFSM.date),
-        lambda callback: check_date(callback.data)
+        lambda callback, state: check_date_for_staff(callback.data, state)
 )
-async def send_choose_time(callback: types.CallbackQuery, state: FSMContext):
+async def send_choosing_time(callback: types.CallbackQuery, state: FSMContext):
 
     print(f'{callback.from_user.full_name} выбрал дату: {callback.data}')
     await state.update_data(date=callback.data)
     state_data = await state.get_data()
-    staff = state_data['staff']
+    staff_id = state_data['staff']
     service = state_data['service']
     data[callback.from_user.id] = await state.get_data()
 
     month, day = callback.data.split('-')
     date = f'{current_year}-{month}-{day}'
     adjust = (1, 4, 4, 4, 4, 4, 4)
-    free_times = get_free_time(date)
+    free_times = get_free_time(staff_id, date)
     params = [date, free_times]
     keyboard_times = create_inline_kb(adjust, 'time', *params)
 
     await callback.message.answer(
-        text=(f'Ваш мастер: {staff}\n'
+        text=(f'Ваш мастер: {staff_id}\n'
               f'Ваша услуга {service}\n'
               f'Дата: {callback.data}\n\n'
               f'Выбери время:'),
@@ -168,8 +177,7 @@ async def send_choose_time(callback: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query(
         StateFilter(SignUpFSM.time),
-        lambda callback: callback.data in get_free_time(
-            f'{current_year}-{data[callback.from_user.id]["date"]}')
+        lambda callback, state: check_free_time_for_staff(callback, state)
 )
 async def send_choise_of_user(
     callback: types.CallbackQuery,
@@ -237,7 +245,6 @@ async def process_accept(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(
         text='Спасибо, теперь введите свое имя:')
     data[callback.from_user.id] = await state.get_data()
-    print(data[callback.from_user.id])
     await state.set_state(SignUpFSM.name)
 
 
@@ -276,19 +283,21 @@ async def create_session(message: Message, state: FSMContext):
 
     data[message.from_user.id] = await state.get_data()
     await state.set_state(SignUpFSM.accept_session)
-    print(data)
 
 
 @dp.callback_query(StateFilter(SignUpFSM.accept_session),
                    lambda callback: callback.data == 'accept')
 async def accept_session(callback: types.CallbackQuery, state: FSMContext):
 
-    data_for_request = data[callback.from_user.id]
-    result = await create_session_api(data_for_request)
+    data_for_request = await state.get_data()
+    await create_session_api(data_for_request)
+
+    data_for_db = create_object_for_db(data_for_request)
+    session.add(data_for_db)
+    session.commit()
 
     await callback.answer(text='Запись создана!\n\n')
     await state.clear()
-    print(f'Ответ API:{result}')
 
 
 @dp.message(F.text == 'Отменить запись')
