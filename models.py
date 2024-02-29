@@ -1,8 +1,6 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 
-from bot import engine
-
 
 Base = declarative_base()
 
@@ -18,6 +16,3 @@ class DataForRecord(Base):
     phone = Column(String())
     email = Column(String(100), nullable=False)
     comment = Column(String(100), nullable=True)
-
-
-Base.metadata.create_all(engine)
