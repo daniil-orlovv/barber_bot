@@ -26,7 +26,6 @@ def create_inline_kb(adjust, type, *args, **kwargs):
                     callback_data=callback_data
                 ))
 
-
     if type == 'date':
         named_month = return_month(args[0])
 
@@ -56,20 +55,21 @@ def create_inline_kb(adjust, type, *args, **kwargs):
 
     if type == 'service':
 
-        if args:
-            for service in args:
+        if kwargs:
+            for service_title, service_id in kwargs.items():
                 buttons.append(InlineKeyboardButton(
-                            text=service,
-                            callback_data=f'{service}'
+                            text=service_title,
+                            callback_data=f'{service_id}'
                 ))
 
     if type == 'staff':
 
-        if args:
-            for staff in args:
+        if kwargs:
+            print(kwargs)
+            for staff_name, staff_id in kwargs.items():
                 buttons.append(InlineKeyboardButton(
-                            text=staff,
-                            callback_data=f'{staff}'
+                            text=staff_name,
+                            callback_data=f'{staff_id}'
                 ))
     print(buttons)
     kb_builder.add(*label_button, *buttons)
