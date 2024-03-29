@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from config import location, TIME, PHONE, ADDRESS
 from keyboards import (button_contacts, button_sign_up, button_cancel,
-                       create_inline_kb)
+                       create_inline_kb, create_calendar)
 from api import (get_free_date, get_free_time, get_free_services,
                  get_free_staff, create_session_api)
 from utils import (check_date_for_staff, create_object_for_db,
@@ -134,25 +134,16 @@ async def send_choose_date(callback: types.CallbackQuery, state: FSMContext):
     staff_name = state_data['staff_name']
     staff_id = state_data['staff_id']
 
+    free_days = get_free_date(staff_id)
+    keyboard = create_calendar(free_days)
+
     await callback.message.edit_text(
         text=(f'Ваш мастер: {staff_name}\n'
               f'Ваша услуга: {service_title}\n\n'
-              f'Выбери дату:')
+              f'Выбери дату:'),
+        reply_markup=keyboard
     )
-
-    free_days = get_free_date(staff_id)
-    adjust = (1, 7, 7, 7, 7, 7)
-    for i in range(0, len(free_days)):
-        month_number = str(list(free_days.keys())[i])
-        days = free_days.get(month_number)
-        params = (month_number, days)
-        keyboard_date = create_inline_kb(adjust, 'date', *params)
-
-        await callback.message.edit_text(
-            text='Выбери дату:',
-            reply_markup=keyboard_date
-        )
-        await state.set_state(SignUpFSM.date)
+    await state.set_state(SignUpFSM.date)
 
 
 @dp.callback_query(
