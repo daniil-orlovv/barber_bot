@@ -1,7 +1,7 @@
 import datetime
 
 from aiogram import Bot, F, types, Router
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
+from aiogram.types import Message
 from aiogram.filters import StateFilter, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
@@ -167,26 +167,13 @@ async def send_choise_of_user(
     service_title = state_data['service_title']
     date = state_data['date']
 
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text='Подтвердить',
-                    callback_data='accept'
-                    ),
-                InlineKeyboardButton(
-                    text='Отменить',
-                    callback_data='cancel'
-                    )
-            ],
-            [
-                InlineKeyboardButton(
-                    text='Изменить',
-                    callback_data='edit'
-                    )
-            ]
-        ]
-    )
+    buttons = {
+        'Подтвердить': 'accept',
+        'Отменить': 'cancel',
+        'Изменить': 'edit'
+    }
+    adjust = (2, 1)
+    keyboard = await create_inline_kb(*adjust, **buttons)
 
     await callback.message.edit_text(
         text=(f'Ваш мастер: {staff_name}\n'
@@ -277,9 +264,9 @@ async def process_email_sent(message: Message, state: FSMContext):
 async def create_session(message: Message, state: FSMContext):
 
     adjust = (2, 2)
-    params = {'Подтвердить': 'accept',
-              'Отменить': 'cancel'}
-    keyboard = create_inline_kb(adjust, **params)
+    buttons = {'Подтвердить': 'accept',
+               'Отменить': 'cancel'}
+    keyboard = create_inline_kb(adjust, **buttons)
 
     state_data = await state.get_data()
     message_id = state_data['id_message']
