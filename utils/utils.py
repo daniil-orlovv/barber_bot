@@ -15,7 +15,7 @@ def return_month(value):
     return months_key.get(value)
 
 
-def create_object_for_db(kwargs):
+def create_registration_for_db(kwargs):
 
     object_db = DataForRecord(
         staff=kwargs['staff_name'],
