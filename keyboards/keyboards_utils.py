@@ -1,6 +1,7 @@
 import datetime
 
-from aiogram.types import (KeyboardButton, InlineKeyboardButton)
+from aiogram.types import (KeyboardButton, InlineKeyboardButton,
+                           InlineKeyboardMarkup)
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
 from utils.utils import return_month
@@ -13,7 +14,7 @@ button_sign_up = KeyboardButton(text='Записаться')
 button_cancel = KeyboardButton(text='Отменить запись')
 
 
-def create_kb(adjust, *args, **kwargs):
+def create_kb(adjust, *args, **kwargs) -> InlineKeyboardMarkup:
     kb_builder = ReplyKeyboardBuilder()
     buttons: list[KeyboardButton] = []
 
@@ -33,7 +34,7 @@ def create_kb(adjust, *args, **kwargs):
     return kb_builder.as_markup(resize_keyboard=True)
 
 
-def create_inline_kb(adjust, *args, **kwargs):
+def create_inline_kb(adjust: list, *args, **kwargs) -> InlineKeyboardMarkup:
     kb_builder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = []
     label_button: list[InlineKeyboardButton] = []
@@ -61,7 +62,7 @@ def create_inline_kb(adjust, *args, **kwargs):
     return kb_builder.as_markup(resize_keyboard=True)
 
 
-def create_calendar(kwargs):
+def create_calendar(kwargs) -> InlineKeyboardMarkup:
     kb_builder = InlineKeyboardBuilder()
 
     buttons_for_months: list[list[InlineKeyboardButton]] = []
