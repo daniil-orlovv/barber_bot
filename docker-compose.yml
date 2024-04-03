@@ -1,0 +1,17 @@
+version: '2'
+
+volumes:
+    pgdata:
+
+services:
+    db:
+        image: postgres:13
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        ports:
+            - 5428:5432
+        environment:
+            - POSTGRES_USER=admin
+            - POSTGRES_DB=db_postgres
+            - POSTGRES_PASSWORD=admin
+            - PGDATA=/var/lib/postgresql/data/pgdata
