@@ -104,4 +104,4 @@ async def create_session_api(data):
         ]
         }
 
-    response = requests.post(url, headers=headers, json=data_for_request)
+    requests.post(url, headers=headers, json=data_for_request)
