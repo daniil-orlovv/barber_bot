@@ -140,15 +140,14 @@ async def send_choosing_time(callback: types.CallbackQuery, state: FSMContext):
     date = f'{current_year}-{month}-{day}'
     await state.update_data(date=date)
     norm_date = to_normalize_date(callback.data)
-    adjust = (1, 4, 4, 4, 4, 4, 4)
+    adjust = [4, 4, 4, 4, 4, 4,]
     free_times = get_free_time(staff_id, date)
-    params = [norm_date, free_times]
-    keyboard_times = create_inline_kb(adjust, *params)
+    keyboard_times = create_inline_kb(adjust, *free_times)
 
     await callback.message.edit_text(
         text=(f'Ваш мастер: {staff_name}\n'
               f'Ваша услуга: {service_title}\n'
-              f'Дата: {to_normalize_date(callback.data)}\n\n'
+              f'Дата: {norm_date}\n\n'
               f'Выбери время:'),
         reply_markup=keyboard_times
     )
@@ -173,7 +172,7 @@ async def send_choise_of_user(
         'Изменить': 'edit'
     }
     adjust = (2, 1)
-    keyboard = await create_inline_kb(*adjust, **buttons)
+    keyboard = create_inline_kb(adjust, **buttons)
 
     await callback.message.edit_text(
         text=(f'Ваш мастер: {staff_name}\n'
