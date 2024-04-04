@@ -37,7 +37,6 @@ def create_kb(adjust, *args, **kwargs) -> InlineKeyboardMarkup:
 def create_inline_kb(adjust: list, *args, **kwargs) -> InlineKeyboardMarkup:
     kb_builder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = []
-    label_button: list[InlineKeyboardButton] = []
 
     if kwargs:
         for key, value in kwargs.items():
@@ -47,17 +46,13 @@ def create_inline_kb(adjust: list, *args, **kwargs) -> InlineKeyboardMarkup:
                 ))
 
     if args:
-        for time in args[1]:
+        for value in args:
             buttons.append(InlineKeyboardButton(
-                        text=time,
-                        callback_data=time
+                        text=f'{value}',
+                        callback_data=f'{value}'
             ))
-        label_button.append(InlineKeyboardButton(
-                    text=args[0],
-                    callback_data=args[0]
-        ))
 
-    kb_builder.add(*label_button, *buttons)
+    kb_builder.add(*buttons)
     kb_builder.adjust(*adjust)
     return kb_builder.as_markup(resize_keyboard=True)
 
