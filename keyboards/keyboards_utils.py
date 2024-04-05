@@ -14,7 +14,7 @@ button_sign_up = KeyboardButton(text='Записаться')
 button_cancel = KeyboardButton(text='Отменить запись')
 
 
-def create_kb(adjust, *args, **kwargs) -> InlineKeyboardMarkup:
+def create_kb(adjust: list, *args, **kwargs) -> InlineKeyboardMarkup:
     kb_builder = ReplyKeyboardBuilder()
     buttons: list[KeyboardButton] = []
 
@@ -39,11 +39,18 @@ def create_inline_kb(adjust: list, *args, **kwargs) -> InlineKeyboardMarkup:
     buttons: list[InlineKeyboardButton] = []
 
     if kwargs:
+
         for key, value in kwargs.items():
-            buttons.append(InlineKeyboardButton(
+            if value.startswith('https'):
+                buttons.append(InlineKeyboardButton(
                     text=key,
-                    callback_data=value
+                    url=value
                 ))
+            else:
+                buttons.append(InlineKeyboardButton(
+                        text=key,
+                        callback_data=value
+                    ))
 
     if args:
         for value in args:
