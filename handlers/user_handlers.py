@@ -1,14 +1,16 @@
 import datetime
 
 from aiogram import Bot, F, types, Router
-from aiogram.types import Message
-from aiogram.filters import StateFilter, CommandStart
+from aiogram.types import Message, CallbackQuery
+from aiogram.filters import StateFilter, CommandStart, or_f, and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from config_data.config import location, TIME, PHONE, ADDRESS
+from config_data.config import (location, TIME, PHONE, ADDRESS,
+                                ADRESS_URL_GOOGLE, ADRESS_URL_YANDEX,
+                                ADRESS_URL_2GIS)
 from keyboards.keyboards_utils import (create_inline_kb, create_calendar,
                                        create_kb)
 from external_services.yclients import (get_free_date, get_free_time,
@@ -52,11 +54,22 @@ async def process_start_command(message: Message, state: FSMContext):
 
 @router.message(F.text == 'Контакты')
 async def command_contacts(message: Message):
+
+    buttons = {
+        'Открыть в Google картах': ADRESS_URL_GOOGLE,
+        'Открыть в Яндекс картах': ADRESS_URL_YANDEX,
+        'Открыть в 2ГИС': ADRESS_URL_2GIS
+    }
+    adjust = (1, 1, 1)
+    inline_keyboard = create_inline_kb(adjust, **buttons)
+
     await message.answer_location(
         location.latitude,
         location.longitude
     )
-    await message.answer(f'{ADDRESS}\n{TIME}\n{PHONE}')
+    await message.answer(
+        text=f'{ADDRESS}\n{TIME}\n{PHONE}',
+        reply_markup=inline_keyboard)
 
 
 @router.message(StateFilter(default_state), F.text == 'Записаться')
