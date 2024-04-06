@@ -15,8 +15,7 @@ from keyboards.keyboards_utils import (create_inline_kb, create_calendar,
 from external_services.yclients import (get_free_date, get_free_time,
                                         get_free_services, get_free_staff,
                                         create_session_api)
-from utils.utils import (create_registration_for_db, to_normalize_date,
-                         return_final_text)
+from utils.utils import create_registration_for_db, to_normalize_date
 from models.models import Base
 from filters.filters import (CheckFreeStaff, CheckFreeService, CheckFreeDate,
                              CheckFreeTime)
@@ -173,6 +172,7 @@ async def reg_check(
     staff_name = state_data['staff_name']
     service_title = state_data['service_title']
     date = state_data['date']
+    date = to_normalize_date(date)
     time = state_data['time']
 
     adjust = [2, 1]
@@ -298,11 +298,12 @@ async def reg_accept_final(callback: types.CallbackQuery, state: FSMContext):
     staff_name = state_data['staff_name']
     service_title = state_data['service_title']
     date = state_data['date']
+    date = to_normalize_date(date)
     time = state_data['time']
 
     await callback.answer(text=lexicon.REG_ACCEPT_FINAL)
     await callback.message.answer(
-        text=return_final_text(staff_name, service_title, date, time)
+        text=lexicon.REG_FINAL.format(staff_name, service_title, date, time)
     )
     await state.clear()
 
