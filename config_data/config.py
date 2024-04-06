@@ -1,8 +1,16 @@
+import os
 from typing import Union
 
 from dataclasses import dataclass
 from environs import Env
 from aiogram import types
+from dotenv import load_dotenv
+
+load_dotenv()
+PARTNER_TOKEN = os.getenv('PARTNER_TOKEN', default='partner_key')
+USER_TOKEN = os.getenv('USER_TOKEN', default='user_token')
+COMPANY_ID = os.getenv('COMPANY_ID', default='company_id')
+
 
 location = types.Location(latitude=59.869865, longitude=30.319785)
 
