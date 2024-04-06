@@ -1,9 +1,15 @@
 import os
 import requests
+from requests.exceptions import ConnectionError, Timeout
 import datetime
+import logging
+from http import HTTPStatus
 
 from dotenv import load_dotenv
 from config_data.config import BASE_URL
+from utils.utils import return_date_iso8601
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 PARTNER_TOKEN = os.getenv('PARTNER_TOKEN', default='partner_key')
@@ -11,7 +17,6 @@ USER_TOKEN = os.getenv('USER_TOKEN', default='user_token')
 COMPANY_ID = os.getenv('COMPANY_ID', default='company_id')
 
 current_year = datetime.datetime.now().year
-company_id = COMPANY_ID
 headers = {
     'Authorization': f'Bearer {PARTNER_TOKEN}, User {USER_TOKEN}',
     'Accept': 'application/vnd.api.v2+json'
@@ -19,89 +24,138 @@ headers = {
 
 
 def get_free_staff():
-    url = f'{BASE_URL}/company/{company_id}/staff/'
-    response = requests.get(url, headers=headers)
-    response_json = response.json()
-    staffs = {}
+    try:
+        url = f'{BASE_URL}/company/{COMPANY_ID}/staff/'
+        response = requests.get(url, headers=headers, timeout=30)
+        if response.status_code != HTTPStatus.OK:
+            logger.error(f'Bad response: {response.status_code}')
+        response_json = response.json()
+        staffs = {}
 
-    if 'data' in response_json:
-        data = response_json['data']
-        for item in data:
-            staffs[item.get('name')] = str(item.get('id'))
+        if 'data' not in response_json:
+            logger.error('Ключ "data" не найден в response_json')
+            raise KeyError('Ключ "data" не найден в response_json')
+        else:
+            data = response_json['data']
+            for item in data:
+                staffs[item.get('name')] = str(item.get('id'))
 
-    return staffs
+        return staffs
+    except ConnectionError as error:
+        logger.error(f'Ошибка соединения: {error}')
+    except Timeout as error:
+        logger.error(f'Превышено время ожидания ответа: {error}')
 
 
 def get_free_date(staff_id):
-    url = f'{BASE_URL}/book_dates/{company_id}?staff_id={staff_id}'
-    response = requests.get(url, headers=headers)
-    response_json = response.json()
+    try:
+        url = f'{BASE_URL}/book_dates/{COMPANY_ID}?staff_id={staff_id}'
+        response = requests.get(url, headers=headers)
+        if response.status_code != HTTPStatus.OK:
+            logger.error(f'Bad response: {response.status_code}')
+        response_json = response.json()
 
-    if 'data' in response_json and 'booking_days' in response_json['data']:
-        booking_days = response_json['data']['booking_days']
-        quoted_dict = {
-            key: [
-                str(item) for item in value
-            ] for key, value in booking_days.items()
-        }
+        if ('data' not in response_json
+           and 'booking_days' not in response_json['data']):
+            logger.error(
+                'Ключи "data" и "booking_days" не найдены в response_json')
+            raise KeyError(
+                'Ключи "data" и "booking_days" не найдены в response_json')
+        else:
+            booking_days = response_json['data']['booking_days']
+            quoted_dict = {
+                key: [
+                    str(item) for item in value
+                ] for key, value in booking_days.items()
+            }
 
-        return quoted_dict
+            return quoted_dict
+    except ConnectionError as error:
+        logger.error(f'Ошибка соединения: {error}')
+    except Timeout as error:
+        logger.error(f'Превышено время ожидания ответа: {error}')
 
 
 def get_free_time(staff_id, date):
-    url = f'{BASE_URL}/book_times/{company_id}/{staff_id}/{date}?'
-    response = requests.get(url, headers=headers)
-    response_json = response.json()
+    try:
+        url = f'{BASE_URL}/book_times/{COMPANY_ID}/{staff_id}/{date}?'
+        response = requests.get(url, headers=headers)
+        if response.status_code != HTTPStatus.OK:
+            logger.error(f'Bad response: {response.status_code}')
+        response_json = response.json()
 
-    if 'data' in response_json:
-        data = response_json['data']
-        free_times = []
-        for item in data:
-            free_times.append(item.get('time'))
-    return free_times
+        if 'data' not in response_json:
+            logger.error('Ключ "data" отсутствует в response_json')
+            raise KeyError('Ключ "data" отсутствует в response_json')
+        else:
+            data = response_json['data']
+            free_times = []
+            for item in data:
+                free_times.append(item.get('time'))
+            return free_times
+    except ConnectionError as error:
+        logger.error(f'Ошибка соединения: {error}')
+    except Timeout as error:
+        logger.error(f'Превышено время ожидания ответа: {error}')
 
 
 def get_free_services(staff_id):
-    url = f'{BASE_URL}/book_services/{company_id}?staff_id={staff_id}'
-    response = requests.get(url, headers=headers)
-    response_json = response.json()
-    if 'data' in response_json:
-        data = response_json['data']
-        free_services = {}
-        services = data.get('services')
-        for item in services:
-            free_services[item.get('title')] = str(item.get('id'))
-    return free_services
+    try:
+        url = f'{BASE_URL}/book_services/{COMPANY_ID}?staff_id={staff_id}'
+        response = requests.get(url, headers=headers)
+        response_json = response.json()
+        if 'data' not in response_json:
+            logger.error('Ключ "data" не найден в response_json')
+            raise KeyError('Ключ "data" не найден в response_json')
+        else:
+            data = response_json['data']
+            free_services = {}
+            services = data.get('services')
+            for item in services:
+                free_services[item.get('title')] = str(item.get('id'))
+            return free_services
+    except ConnectionError as error:
+        logger.error(f'Ошибка соединения: {error}')
+    except Timeout as error:
+        logger.error(f'Превышено время ожидания ответа: {error}')
 
 
 async def create_session_api(data):
+    try:
+        if not data:
+            logger.error('В "data" отсутствуют данные!')
 
-    time = data['time']
-    year, month, day = data['date'].split('-')
-    date_iso8601 = f'{year}-{int(month):02}-{int(day):02}T{time}:00+0300'
-    service_id = get_free_services(data['staff_id'])[data['service_title']]
+        time = data['time']
+        year, month, day = data['date'].split('-')
+        date_iso8601 = return_date_iso8601(year, month, day, time)
+        service_id = get_free_services(data['staff_id'])[data['service_title']]
 
-    url = f'https://api.yclients.com/api/v1/book_record/{company_id}/'
-    data_for_request = {
-        "phone": data['phone'],
-        "fullname": data['name'],
-        "email": data['email'],
-        # "code": "38829",
-        "comment": data['comment'],
-        "type": "mobile",
-        "notify_by_sms": 2,
-        "notify_by_email": 24,
-        # "api_id": "777",  # Необязательный параметр
-        "appointments": [
-            {
-                "id": 1,
-                "services": [
-                    service_id
-                ],
-                "staff_id": int(data['staff_id']),
-                "datetime": date_iso8601,
+        url = f'https://api.yclients.com/api/v1/book_record/{COMPANY_ID}/'
+        data_for_request = {
+            "phone": data['phone'],
+            "fullname": data['name'],
+            "email": data['email'],
+            "comment": data['comment'],
+            "type": "mobile",
+            "notify_by_sms": 2,
+            "notify_by_email": 24,
+            "appointments": [
+                {
+                    "id": 1,
+                    "services": [
+                        service_id
+                    ],
+                    "staff_id": int(data['staff_id']),
+                    "datetime": date_iso8601,
+                }
+            ]
             }
-        ]
-        }
 
-    requests.post(url, headers=headers, json=data_for_request)
+        response = requests.post(url, headers=headers, json=data_for_request)
+        if response.status_code != HTTPStatus.CREATED:
+            logger.error(f'Bad response: {response.status_code}')
+            raise
+    except ConnectionError as error:
+        logger.error(f'Ошибка соединения: {error}')
+    except Timeout as error:
+        logger.error(f'Превышено время ожидания ответа: {error}')
