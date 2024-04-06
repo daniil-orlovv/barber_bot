@@ -1,20 +1,14 @@
-import os
 import requests
 from requests.exceptions import ConnectionError, Timeout
 import datetime
 import logging
 from http import HTTPStatus
 
-from dotenv import load_dotenv
-from config_data.config import BASE_URL
+from config_data.config import BASE_URL, PARTNER_TOKEN, USER_TOKEN, COMPANY_ID
 from utils.utils import return_date_iso8601
 
 logger = logging.getLogger(__name__)
 
-load_dotenv()
-PARTNER_TOKEN = os.getenv('PARTNER_TOKEN', default='partner_key')
-USER_TOKEN = os.getenv('USER_TOKEN', default='user_token')
-COMPANY_ID = os.getenv('COMPANY_ID', default='company_id')
 
 current_year = datetime.datetime.now().year
 headers = {
