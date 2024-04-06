@@ -36,3 +36,7 @@ def to_normalize_date(date):
     normal_date = (
         f'{invert_date[0]} {return_month(invert_date[1])} {current_year}')
     return normal_date
+
+
+def return_date_iso8601(year, month, day, time):
+    return f'{year}-{int(month):02}-{int(day):02}T{time}:00+0300'
