@@ -25,7 +25,8 @@ def create_registration_for_db(kwargs):
         name=kwargs['name'],
         phone=kwargs['phone'],
         email=kwargs['email'],
-        comment=kwargs['comment']
+        comment=kwargs['comment'],
+        record_hash=kwargs['record_hash']
     )
     return object_db
 
