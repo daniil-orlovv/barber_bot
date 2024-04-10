@@ -1,5 +1,5 @@
 import requests
-from requests.exceptions import ConnectionError, Timeout
+from requests.exceptions import ConnectionError, Timeout, HTTPError
 import datetime
 import logging
 from http import HTTPStatus
@@ -147,8 +147,10 @@ async def create_session_api(data):
 
         response = requests.post(url, headers=headers, json=data_for_request)
         if response.status_code != HTTPStatus.CREATED:
-            logger.error(f'Bad response: {response.status_code}')
-            raise
+            logger.error(
+                f'Bad response: {response.status_code}:{response.text}')
+            return response
+        return response
     except ConnectionError as error:
         logger.error(f'Ошибка соединения: {error}')
     except Timeout as error:
