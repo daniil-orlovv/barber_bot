@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 async def main():
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format='%(filename)s:%(lineno)d #%(levelname)-8s '
                '[%(asctime)s] - %(name)s - %(message)s')
     check_tokens()
@@ -19,7 +19,7 @@ async def main():
         logger.info('Starting bot')
         config: Config = load_config()
         bot = Bot(token=config.tg_bot.token,
-                parse_mode='HTML')
+                  parse_mode='HTML')
         dp = Dispatcher()
         dp.include_router(user_handlers.router)
 
