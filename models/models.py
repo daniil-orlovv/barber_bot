@@ -16,6 +16,7 @@ class DataForRecord(Base):
     phone = Column(String())
     email = Column(String(100), nullable=False)
     comment = Column(String(100), nullable=True)
+    record_hash = Column(String(100))
 
 
 class Staff(Base):
