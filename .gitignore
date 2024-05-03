@@ -2,3 +2,5 @@ venv
 .env
 __pycache__
 sqlite3.db
+alembic
+alembic.ini

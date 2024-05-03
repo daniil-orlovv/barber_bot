@@ -12,3 +12,13 @@ class SignUpFSM(StatesGroup):
     email = State()
     comment = State()
     accept_session = State()
+
+
+class GetEditRecordFSM(StatesGroup):
+    choise_records = State()
+    choise_actions = State()
+    edit_record_date = State()
+    edit_record_time = State()
+    edit_accepting = State()
+    cancel_record = State()
+    cancel_record_accepting = State()

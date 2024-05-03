@@ -4,7 +4,11 @@ import logging
 from aiogram import Bot, Dispatcher
 from config_data.config import Config, load_config
 from errors.errors import check_tokens
-from handlers import user_handlers
+from handlers.user_handlers import create_record, edit_record
+from models.models import Base
+from sqlalchemy import Engine, create_engine
+from sqlalchemy.pool import QueuePool
+from middlewares.middleware import DBMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +24,19 @@ async def main():
         config: Config = load_config()
         bot = Bot(token=config.tg_bot.token,
                   parse_mode='HTML')
+        engine = create_engine(
+            'sqlite:///sqlite3.db',
+            poolclass=QueuePool,
+            pool_size=5,
+            max_overflow=10
+        )
+        Base.metadata.create_all(engine)
         dp = Dispatcher()
-        dp.include_router(user_handlers.router)
+        dp.include_router(create_record.router)
+        dp.include_router(edit_record.router)
+        dp.update.outer_middleware(DBMiddleware())
+        dp.workflow_data.update({
+            'engine': engine, 'bot': bot})
 
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)

@@ -34,13 +34,15 @@ def create_kb(adjust: list, *args, **kwargs) -> InlineKeyboardMarkup:
     return kb_builder.as_markup(resize_keyboard=True)
 
 
-def create_inline_kb(adjust: list, *args, **kwargs) -> InlineKeyboardMarkup:
+def create_inline_kb(method_kb, *args, **kwargs) -> InlineKeyboardMarkup:
     kb_builder = InlineKeyboardBuilder()
     buttons: list[InlineKeyboardButton] = []
 
     if kwargs:
+        print('kwargs: {kwargs}')
 
         for key, value in kwargs.items():
+            print(key, value)
             if value.startswith('https'):
                 buttons.append(InlineKeyboardButton(
                     text=key,
@@ -49,7 +51,7 @@ def create_inline_kb(adjust: list, *args, **kwargs) -> InlineKeyboardMarkup:
             else:
                 buttons.append(InlineKeyboardButton(
                         text=key,
-                        callback_data=value
+                        callback_data=str(value)
                     ))
 
     if args:
@@ -60,7 +62,7 @@ def create_inline_kb(adjust: list, *args, **kwargs) -> InlineKeyboardMarkup:
             ))
 
     kb_builder.add(*buttons)
-    kb_builder.adjust(*adjust)
+    kb_builder.adjust(*method_kb)
     return kb_builder.as_markup(resize_keyboard=True)
 
 

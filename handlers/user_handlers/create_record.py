@@ -15,8 +15,10 @@ from keyboards.keyboards_utils import (create_inline_kb, create_calendar,
                                        create_kb)
 from external_services.yclients import (get_free_date, get_free_time,
                                         get_free_services, get_free_staff,
-                                        create_session_api)
+                                        create_session_api, get_ycl_id,
+                                        get_all_records_by_client)
 from utils.utils import create_registration_for_db, to_normalize_date
+from utils.utils_db import add_client_in_db, get_ycl_id_of_user
 from models.models import Base
 from filters.filters import (CheckFreeStaff, CheckFreeService, CheckFreeDate,
                              CheckFreeTime)
@@ -77,7 +79,7 @@ async def contacts(message: Message):
     logger.debug('Send message from handler contacts')
 
 
-@router.message(StateFilter(default_state), F.text == 'Записаться')
+@router.message(F.text == 'Записаться')
 async def send_masters(message: Message, state: FSMContext):
 
     free_staffs = get_free_staff()
@@ -310,7 +312,8 @@ async def creating_and_check(message: Message, state: FSMContext):
 
 @router.callback_query(StateFilter(SignUpFSM.accept_session),
                        lambda callback: callback.data == 'accept')
-async def accept_creating(callback: types.CallbackQuery, state: FSMContext):
+async def accept_creating(callback: types.CallbackQuery, state: FSMContext,
+                          session: Session):
 
     await callback.message.delete()
     data_for_request = await state.get_data()
@@ -319,12 +322,20 @@ async def accept_creating(callback: types.CallbackQuery, state: FSMContext):
     print(response_data)
     if response.status_code == 201:
         record_hash = response_data['data'][0]['record_hash']
+        record_id = response_data['data'][0]['record_id']
         await state.update_data(record_hash=record_hash)
+        await state.update_data(record_id=record_id)
         data = await state.get_data()
-        print(data)
         data_for_db = create_registration_for_db(data)
         session.add(data_for_db)
         session.commit()
+        ycl_id = get_ycl_id(data)
+        telegram_id = callback.from_user.id
+        await state.update_data(ycl_id=ycl_id)
+        await state.update_data(telegram_id=telegram_id)
+        data = await state.get_data()
+        print(data)
+        add_client_in_db(session, data)
 
         state_data = await state.get_data()
         staff_name = state_data['staff_name']

@@ -1,9 +1,9 @@
-import datetime
+from datetime import datetime
 
 from models.models import DataForRecord
 
 
-current_year = datetime.datetime.now().year
+current_year = datetime.now().year
 
 
 def return_month(value):
@@ -26,7 +26,8 @@ def create_registration_for_db(kwargs):
         phone=kwargs['phone'],
         email=kwargs['email'],
         comment=kwargs['comment'],
-        record_hash=kwargs['record_hash']
+        record_hash=kwargs['record_hash'],
+        record_id=kwargs['record_id']
     )
     return object_db
 
@@ -41,3 +42,19 @@ def to_normalize_date(date):
 
 def return_date_iso8601(year, month, day, time):
     return f'{year}-{int(month):02}-{int(day):02}T{time}:00+0300'
+
+
+def return_date_for_records(date):
+    parts = date.split()
+
+# Получаем дату и время
+    date = parts[0]
+    time = parts[1]
+    time = time[:5]
+
+    # Преобразуем дату в нужный формат "23.05.2024"
+    formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%d.%m.%Y")
+
+    # Объединяем преобразованную дату и время
+    new_string = f"{formatted_date} {time}"
+    return new_string
