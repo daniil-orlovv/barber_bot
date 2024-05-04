@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 router = Router()
 
 
-@router.message(F.text == 'Контакты')
+@router.message(F.text == 'Контакты 📍')
 async def contacts(message: Message):
 
     inline_keyboard = create_inline_kb(contacts_buttons['adjust'],

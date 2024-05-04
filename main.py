@@ -4,7 +4,8 @@ import logging
 from aiogram import Bot, Dispatcher
 from config_data.config import Config, load_config
 from errors.errors import check_tokens
-from handlers.user_handlers import create_record, edit_record
+from handlers.user_handlers import (create_record, edit_record, contacts,
+                                    services)
 from models.models import Base
 from sqlalchemy import create_engine
 from sqlalchemy.pool import QueuePool
@@ -34,6 +35,8 @@ async def main():
         dp = Dispatcher()
         dp.include_router(create_record.router)
         dp.include_router(edit_record.router)
+        dp.include_router(contacts.router)
+        dp.include_router(services.router)
         dp.update.outer_middleware(DBMiddleware())
         dp.workflow_data.update({
             'engine': engine, 'bot': bot, 'config': config})

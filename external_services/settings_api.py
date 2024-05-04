@@ -26,29 +26,12 @@ urls = {
     'edit_record':
         'https://api.yclients.com/api/v1/record/{}/{}',
     'delete_record':
-        'https://api.yclients.com/api/v1/record/{}/{}'
+        'https://api.yclients.com/api/v1/record/{}/{}',
+    'get_all_services':
+        'https://api.yclients.com/api/v1/book_services/{}'
 }
 
 request_body = {
-    'create_session_api': {
-            "phone": {},
-            "fullname": {},
-            "email": "",
-            "comment": "",
-            "type": "mobile",
-            "notify_by_sms": 2,
-            "notify_by_email": 24,
-            "appointments": [
-                {
-                    "id": 1,
-                    "services": [
-                        {}
-                    ],
-                    "staff_id": int({}),
-                    "datetime": {},
-                }
-            ]
-    },
     'get_ycl_id': {
         "page": 1,
         "fields": [
@@ -59,17 +42,5 @@ request_body = {
         "order_by": "name",
         "order_by_direction": "desc",
         "operation": "AND"
-    },
-    'edit_record': {
-        "staff_id": {},
-        "services": [{
-                "id": {}
-            }
-        ],
-        "client": {
-            "id": {}
-        },
-        "datetime": {},  # "2024-05-09 17:00:00"
-        "seance_length": {}['seance_length']
     }
 }

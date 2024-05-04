@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 current_year = datetime.datetime.now().year
 
 
-def get_ycl_id(state_data: dict):
+def get_ycl_id(phone):
     url = urls['get_ycl_id'].format(COMPANY_ID)
     data_for_request = request_body['get_ycl_id']
     response = requests.post(url, headers=headers, json=data_for_request)
@@ -20,9 +20,12 @@ def get_ycl_id(state_data: dict):
     data = response_json['data']
     clients = {}
     for client in data:
+        print(f'Клиент: {client}')
         clients[client.get('phone')] = client.get('id')
-    phone = state_data['phone']
+    print(f'phone: {phone}')
+    print(f'clients:{clients}')
     ycl_id = clients.get(phone)
+    print(f'ycl_id:{ycl_id}')
     return ycl_id
 
 
@@ -57,9 +60,18 @@ def edit_record(state_data):
     datetime = date + time
     url = urls['edit_record'].format(COMPANY_ID, record_id)
 
-    data_for_request = request_body['edit_record'].format(
-        state_data['staff_id'], state_data['service_id'],
-        state_data['client_id'], datetime, state_data['seance_length'])
+    data_for_request = {
+        "staff_id": state_data['staff_id'],
+        "services": [{
+                "id": state_data['service_id']
+            }
+        ],
+        "client": {
+            "id": state_data['client_id']
+        },
+        "datetime": datetime,  # "2024-05-09 17:00:00"
+        "seance_length": state_data['seance_length']
+    }
     response = requests.put(url, headers=headers, json=data_for_request)
     return response.text
 

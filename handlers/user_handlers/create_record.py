@@ -1,5 +1,6 @@
 import datetime
 import logging
+import time
 
 from aiogram import Bot, F, types, Router
 from aiogram.types import Message
@@ -13,8 +14,8 @@ from external_services.create_api import (get_free_date, get_free_time,
                                           get_free_services, get_free_staff,
                                           create_session_api)
 from external_services.edit_api import get_ycl_id
-from utils.utils import create_registration_for_db, to_normalize_date
-from utils.utils_db import add_client_in_db, add_record_in_db
+from utils.utils import to_normalize_date
+from utils.utils_db import add_client_in_db
 from filters.filters import (CheckFreeStaff, CheckFreeService, CheckFreeDate,
                              CheckFreeTime, CheckCallbackAccept,
                              CheckCallbackCancel)
@@ -38,7 +39,7 @@ async def start(message: Message):
     logger.debug('Send message from handler start')
 
 
-@router.message(F.text == 'Записаться')
+@router.message(F.text == 'Записаться ✏️')
 async def send_masters(message: Message, state: FSMContext):
 
     free_staffs = get_free_staff()
@@ -60,6 +61,7 @@ async def send_masters(message: Message, state: FSMContext):
 @router.callback_query(CheckFreeStaff(), StateFilter(SignUpFSM.staff))
 async def send_service(callback: types.CallbackQuery, state: FSMContext):
 
+    await callback.message.edit_text('Ищу доступные услуги... ⏳')
     staff_id = callback.data
     state_data = await state.get_data()
     all_staffs = state_data.get('all_staffs', {})
@@ -73,6 +75,7 @@ async def send_service(callback: types.CallbackQuery, state: FSMContext):
     adjust = (2, 2, 2)
     keyboard_services = create_inline_kb(adjust, **free_services)
 
+    time.sleep(0.5)
     await callback.message.edit_text(
         text=lexicon.REG_SERVICE.format(staff_name),
         reply_markup=keyboard_services
@@ -85,6 +88,7 @@ async def send_service(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(StateFilter(SignUpFSM.service), CheckFreeService())
 async def send_date(callback: types.CallbackQuery, state: FSMContext):
 
+    await callback.message.edit_text('Ищу свободные даты... ⏳')
     service_id = callback.data
     state_data = await state.get_data()
     staff_id = state_data['staff_id']
@@ -97,6 +101,7 @@ async def send_date(callback: types.CallbackQuery, state: FSMContext):
     free_days = get_free_date(staff_id)
     keyboard = create_calendar(free_days)
 
+    time.sleep(0.5)
     await callback.message.edit_text(
         text=lexicon.REG_DATE.format(staff_name, service_title),
         reply_markup=keyboard
@@ -109,6 +114,7 @@ async def send_date(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(StateFilter(SignUpFSM.date), CheckFreeDate())
 async def send_time(callback: types.CallbackQuery, state: FSMContext):
 
+    await callback.message.edit_text('Ищу свободное время... ⏳')
     state_data = await state.get_data()
     staff_name = state_data['staff_name']
     staff_id = state_data['staff_id']
@@ -122,6 +128,7 @@ async def send_time(callback: types.CallbackQuery, state: FSMContext):
     free_times = get_free_time(staff_id, date)
     keyboard_times = create_inline_kb(adjust, *free_times)
 
+    time.sleep(0.5)
     await callback.message.edit_text(
         text=lexicon.REG_TIME.format(staff_name, service_title, norm_date),
         reply_markup=keyboard_times
@@ -137,19 +144,21 @@ async def pre_check(
     state: FSMContext
 ):
 
+    await callback.message.edit_text('Загрузка... ⏳')
     await state.update_data(time=callback.data)
     state_data = await state.get_data()
     staff_name = state_data['staff_name']
     service_title = state_data['service_title']
     date = state_data['date']
     date = to_normalize_date(date)
-    time = state_data['time']
+    times = state_data['time']
 
     adjust = (2, 1)
     keyboard = create_inline_kb(adjust, **accept_cancel)
 
+    time.sleep(0.5)
     await callback.message.edit_text(
-        text=lexicon.REG_CHECK.format(staff_name, service_title, date, time),
+        text=lexicon.REG_CHECK.format(staff_name, service_title, date, times),
         reply_markup=keyboard
     )
     await state.set_state(SignUpFSM.check_data)
@@ -161,6 +170,8 @@ async def pre_check(
                        CheckCallbackCancel())
 async def cancel(callback: types.CallbackQuery, state: FSMContext):
 
+    await callback.message.edit_text('Загрузка... ⏳')
+    time.sleep(0.5)
     await callback.message.edit_text(
         text='Вы отменили процесс записи.'
     )
@@ -173,6 +184,8 @@ async def cancel(callback: types.CallbackQuery, state: FSMContext):
                        CheckCallbackAccept())
 async def get_name(callback: types.CallbackQuery, state: FSMContext):
 
+    await callback.message.edit_text('Загрузка... ⏳')
+    time.sleep(0.5)
     await callback.message.edit_text(
         text=lexicon.REG_NAME)
     id_message = callback.message.message_id
@@ -184,6 +197,7 @@ async def get_name(callback: types.CallbackQuery, state: FSMContext):
 
 @router.message(StateFilter(SignUpFSM.name), F.text.isalpha())
 async def get_phone(message: Message, state: FSMContext, bot: Bot):
+
     await state.update_data(name=message.text)
 
     state_data = await state.get_data()
@@ -232,22 +246,17 @@ async def creating_and_check(message: Message, state: FSMContext, bot: Bot):
 async def accept_creating(callback: types.CallbackQuery, state: FSMContext,
                           session: Session):
 
-    await callback.message.delete()
+    await callback.message.edit_text('Записываю на сеанс... ⏳')
     data_for_request = await state.get_data()
     response = await create_session_api(data_for_request)
     response_data = response.json()
     if response.status_code == 201:
-        record_hash = response_data['data'][0]['record_hash']
-        record_id = response_data['data'][0]['record_id']
-        await state.update_data(record_hash=record_hash)
-        await state.update_data(record_id=record_id)
+
         data = await state.get_data()
-        data_for_db = create_registration_for_db(data)
-        add_record_in_db(session, data_for_db)
-        ycl_id = get_ycl_id(data)
-        telegram_id = callback.from_user.id
-        await state.update_data(ycl_id=ycl_id)
-        await state.update_data(telegram_id=telegram_id)
+        client_ycl_id = get_ycl_id(data['phone'])
+        client_telegram_id = callback.from_user.id
+        await state.update_data(client_ycl_id=client_ycl_id,
+                                client_telegram_id=client_telegram_id)
         data = await state.get_data()
         add_client_in_db(session, data)
 
@@ -256,12 +265,13 @@ async def accept_creating(callback: types.CallbackQuery, state: FSMContext,
         service_title = state_data['service_title']
         date = state_data['date']
         date = to_normalize_date(date)
-        time = state_data['time']
+        times = state_data['time']
 
+        time.sleep(0.5)
         await callback.answer(text=lexicon.REG_ACCEPT_FINAL)
-        await callback.message.answer(
+        await callback.message.edit_text(
             text=lexicon.REG_FINAL.format(staff_name, service_title, date,
-                                          time)
+                                          times)
         )
         await state.clear()
         logger.debug('Send message from handler accept_creating')
@@ -277,7 +287,7 @@ async def accept_creating(callback: types.CallbackQuery, state: FSMContext,
         await state.clear()
 
 
-@router.message(F.text == 'Отмена')
+@router.message(F.text == 'Отмена ❌')
 async def cancel_creating(message: Message, state: FSMContext):
 
     keyboard = create_kb(start_buttons['adjust'], *start_buttons['buttons'])

@@ -6,7 +6,7 @@ from http import HTTPStatus
 from config_data.config import COMPANY_ID
 from utils.utils import return_date_iso8601
 
-from external_services.settings_api import urls, headers, request_body
+from external_services.settings_api import urls, headers
 
 logger = logging.getLogger(__name__)
 
@@ -121,10 +121,25 @@ async def create_session_api(data):
         service_id = get_free_services(data['staff_id'])[data['service_title']]
 
         url = urls['create_session_api'].format(COMPANY_ID)
-        data_for_request = request_body['create_session_api'].format(
-            data['phone'], data['name'], service_id, data['staff_id'],
-            date_iso8601)
-
+        data_for_request = {
+            "phone": data['phone'],
+            "fullname": data['name'],
+            "email": "",
+            "comment": "",
+            "type": "mobile",
+            "notify_by_sms": 2,
+            "notify_by_email": 24,
+            "appointments": [
+                {
+                    "id": 1,
+                    "services": [
+                        service_id
+                    ],
+                    "staff_id": int(data['staff_id']),
+                    "datetime": date_iso8601,
+                }
+            ]
+        }
         response = requests.post(url, headers=headers, json=data_for_request)
         if response.status_code != HTTPStatus.CREATED:
             logger.error(

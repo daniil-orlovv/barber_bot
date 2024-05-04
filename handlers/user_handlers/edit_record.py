@@ -10,8 +10,8 @@ from keyboards.keyboards_utils import create_inline_kb, create_calendar
 from external_services.create_api import get_free_date, get_free_time
 from external_services.edit_api import (get_all_records_by_client,
                                         get_record_by_id, edit_record,
-                                        delete_record)
-from utils.utils_db import get_ycl_id_of_user
+                                        delete_record, get_ycl_id)
+from utils.utils_db import get_phone_client_from_db
 from utils.utils import return_date_for_records
 from states.states import GetEditRecordFSM
 from lexicon.buttons import edit_cancel, accept_cancel
@@ -21,11 +21,12 @@ current_year = datetime.now().year
 router = Router()
 
 
-@router.message(F.text == 'Мои записи')
+@router.message(F.text == 'Мои записи 📖')
 async def all_records(message: Message, session: Session, state: FSMContext):
 
     telegram_id = message.from_user.id
-    ycl_id = get_ycl_id_of_user(session, telegram_id)
+    phone = get_phone_client_from_db(session, telegram_id)
+    ycl_id = get_ycl_id(phone)
     records = get_all_records_by_client(ycl_id)
     adjust = (1, 1, 1, 1, 1)
     inline_keyboard = create_inline_kb(adjust, **records)
@@ -39,7 +40,7 @@ async def all_records(message: Message, session: Session, state: FSMContext):
 @router.callback_query(StateFilter(GetEditRecordFSM.choise_records))
 async def one_record(callback: types.CallbackQuery, state: FSMContext):
 
-    await callback.message.edit_text('Зарузка записи...')
+    await callback.message.edit_text('Загружаю запись... ⏳')
     record_id = callback.data
     print(record_id)
     record = get_record_by_id(record_id)
@@ -74,7 +75,7 @@ async def one_record(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(StateFilter(GetEditRecordFSM.choise_actions))
 async def edit_or_cancel(callback: types.CallbackQuery, state: FSMContext):
     if callback.data == 'edit':
-        await callback.message.edit_text('Ищу свободные даты...')
+        await callback.message.edit_text('Ищу свободные даты... ⏳')
         state_data = await state.get_data()
         staff_id = state_data['staff_id']
         free_days = get_free_date(staff_id)
@@ -87,7 +88,7 @@ async def edit_or_cancel(callback: types.CallbackQuery, state: FSMContext):
         await state.set_state(GetEditRecordFSM.edit_record_date)
 
     elif callback.data == 'cancel':
-        await callback.message.edit_text('Зарузка...')
+        await callback.message.edit_text('Загрузка... ⏳')
         adjust = (2, 2)
         inline_keyboard = create_inline_kb(adjust, **accept_cancel)
         time.sleep(0.5)
@@ -101,7 +102,7 @@ async def edit_or_cancel(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(StateFilter(GetEditRecordFSM.edit_record_date))
 async def send_time(callback: types.CallbackQuery, state: FSMContext):
 
-    await callback.message.edit_text('Ищу свободное время...')
+    await callback.message.edit_text('Ищу свободное время... ⏳')
     month, day = callback.data.split('-')
     date = f'{current_year}-{month}-{day}'
     state_data = await state.get_data()
@@ -123,7 +124,7 @@ async def send_time(callback: types.CallbackQuery, state: FSMContext):
 async def send_accept_for_edit(callback: types.CallbackQuery,
                                state: FSMContext):
 
-    await callback.message.edit_text('Зарузка...')
+    await callback.message.edit_text('Загрузка... ⏳')
     new_time = callback.data
     state_data = await state.get_data()
     await state.update_data(new_time=new_time)
@@ -149,7 +150,7 @@ async def update_record(callback: types.CallbackQuery, state: FSMContext):
 
     if callback.data == 'accept':
 
-        await callback.message.edit_text('Переношу запись...')
+        await callback.message.edit_text('Переношу запись... ⏳')
         state_data = await state.get_data()
         title = state_data['title']
         name_staff = state_data['name_staff']
@@ -161,7 +162,7 @@ async def update_record(callback: types.CallbackQuery, state: FSMContext):
 
         time.sleep(0.5)
         await callback.message.edit_text(
-            text=(f'Запись перенесена!\n\n'
+            text=(f'Запись перенесена! ✅\n\n'
                   f'Услуга: {title}\n'
                   f'Мастер: {name_staff}\n'
                   f'Стоимость: {service_cost} руб.\n'
@@ -171,7 +172,7 @@ async def update_record(callback: types.CallbackQuery, state: FSMContext):
         await state.clear()
 
     elif callback.data == 'cancel':
-        await callback.message.edit_text('Отменяю перенос...')
+        await callback.message.edit_text('Отменяю перенос... ⏳')
         time.sleep(0.5)
         await callback.message.edit_message(
             text=('Перенос записи отменен!'))
@@ -182,7 +183,7 @@ async def update_record(callback: types.CallbackQuery, state: FSMContext):
 async def send_accept_for_cancel(callback: types.CallbackQuery,
                                  state: FSMContext):
 
-    await callback.message.edit_text('Зарузка...')
+    await callback.message.edit_text('Загрузка... ⏳')
     adjust = (2, 2)
     inline_keyboard = create_inline_kb(adjust, **accept_cancel)
     time.sleep(0.5)
@@ -197,18 +198,18 @@ async def send_accept_for_cancel(callback: types.CallbackQuery,
 async def cancel_record(callback: types.CallbackQuery, state: FSMContext):
 
     if callback.data == 'accept':
-        await callback.message.edit_text('Отменяю запись...')
+        await callback.message.edit_text('Отменяю запись... ⏳')
         state_data = await state.get_data()
         record_id = state_data['record_id']
         delete_record(record_id)
         time.sleep(0.5)
         await callback.message.edit_text(
-            text='Запись успешно отменена!'
+            text='Запись успешно отменена! ✅'
         )
         await state.clear()
 
     elif callback.data == 'cancel':
-        await callback.message.edit_text('Загрузка...')
+        await callback.message.edit_text('Загрузка... ⏳')
         time.sleep(0.5)
         await callback.message.edit_text(
             text=('Запись не отменена!'))
