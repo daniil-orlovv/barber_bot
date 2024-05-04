@@ -7,9 +7,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from sqlalchemy.orm import Session
 from keyboards.keyboards_utils import create_inline_kb, create_calendar
-from external_services.yclients import (get_all_records_by_client,
+from external_services.create_api import get_free_date, get_free_time
+from external_services.edit_api import (get_all_records_by_client,
                                         get_record_by_id, edit_record,
-                                        get_free_date, get_free_time,
                                         delete_record)
 from utils.utils_db import get_ycl_id_of_user
 from utils.utils import return_date_for_records

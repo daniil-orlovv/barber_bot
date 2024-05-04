@@ -6,7 +6,7 @@ from config_data.config import Config, load_config
 from errors.errors import check_tokens
 from handlers.user_handlers import create_record, edit_record
 from models.models import Base
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import create_engine
 from sqlalchemy.pool import QueuePool
 from middlewares.middleware import DBMiddleware
 
@@ -36,7 +36,7 @@ async def main():
         dp.include_router(edit_record.router)
         dp.update.outer_middleware(DBMiddleware())
         dp.workflow_data.update({
-            'engine': engine, 'bot': bot})
+            'engine': engine, 'bot': bot, 'config': config})
 
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)

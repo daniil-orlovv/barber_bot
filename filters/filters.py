@@ -2,8 +2,8 @@ from aiogram.types import CallbackQuery
 from aiogram.filters import BaseFilter
 from aiogram.fsm.context import FSMContext
 
-from external_services.yclients import (get_free_staff, get_free_services,
-                                        get_free_date, get_free_time)
+from external_services.create_api import (get_free_staff, get_free_services,
+                                          get_free_date, get_free_time)
 
 
 class CheckFreeStaff(BaseFilter):
@@ -21,8 +21,8 @@ class CheckFreeService(BaseFilter):
     ) -> bool:
 
         state_data = await state.get_data()
-        free_services, _ = get_free_services(state_data['staff_id'])
-        return callback.data in free_services.values()
+        return callback.data in get_free_services(
+            state_data['staff_id']).values()
 
 
 class CheckFreeDate(BaseFilter):
@@ -56,15 +56,25 @@ class CheckFreeTime(BaseFilter):
         return callback.data in get_free_time(staff_id, date)
 
 
-class CheckPhoneNumber(BaseFilter):
+class CheckCallbackAccept(BaseFilter):
 
     async def __call__(
             self,
-            callback: CallbackQuery,
-            state: FSMContext
+            callback: CallbackQuery
     ) -> bool:
+        """Метод проверяющий соответствие callback == "accept"
+        """
 
-        state_data = await state.get_data()
-        date = state_data['date']
-        staff_id = state_data['staff_id']
-        return callback.data in get_free_time(staff_id, date)
+        return callback.data == 'accept'
+
+
+class CheckCallbackCancel(BaseFilter):
+
+    async def __call__(
+            self,
+            callback: CallbackQuery
+    ) -> bool:
+        """Метод проверяющий соответствие callback == "accept"
+        """
+
+        return callback.data == 'cancel'

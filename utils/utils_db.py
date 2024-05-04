@@ -2,6 +2,11 @@ from models.models import Client
 from sqlalchemy.orm import Session
 
 
+def add_record_in_db(session, data_for_db):
+    session.add(data_for_db)
+    session.commit()
+
+
 def create_object_client(kwargs):
     return Client(
         name=kwargs['name'],
