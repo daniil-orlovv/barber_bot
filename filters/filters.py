@@ -21,8 +21,8 @@ class CheckFreeService(BaseFilter):
     ) -> bool:
 
         state_data = await state.get_data()
-        return callback.data in get_free_services(
-            state_data['staff_id']).values()
+        free_services, _ = get_free_services(state_data['staff_id'])
+        return callback.data in free_services.values()
 
 
 class CheckFreeDate(BaseFilter):
@@ -43,6 +43,20 @@ class CheckFreeDate(BaseFilter):
 
 
 class CheckFreeTime(BaseFilter):
+
+    async def __call__(
+            self,
+            callback: CallbackQuery,
+            state: FSMContext
+    ) -> bool:
+
+        state_data = await state.get_data()
+        date = state_data['date']
+        staff_id = state_data['staff_id']
+        return callback.data in get_free_time(staff_id, date)
+
+
+class CheckPhoneNumber(BaseFilter):
 
     async def __call__(
             self,

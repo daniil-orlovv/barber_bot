@@ -9,8 +9,7 @@ class SignUpFSM(StatesGroup):
     check_data = State()
     name = State()
     phone = State()
-    email = State()
-    comment = State()
+    check_data = State()
     accept_session = State()
 
 

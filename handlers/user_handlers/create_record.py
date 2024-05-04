@@ -25,7 +25,7 @@ from filters.filters import (CheckFreeStaff, CheckFreeService, CheckFreeDate,
 from config_data.config import load_config, Config
 from states.states import SignUpFSM
 import lexicon.lexicon_ru as lexicon
-from lexicon.buttons import accept_cancel
+from lexicon.buttons import accept_cancel, start_buttons
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ async def start(message: Message, state: FSMContext):
 
     buttons = ['Контакты', 'Записаться', 'Отменить запись']
     adjust = (2, 1)
-    keyboard = create_kb(adjust, *buttons)
+    keyboard = create_kb(adjust, *start_buttons)
     await message.answer(
         text=lexicon.WELCOME_TEXT,
         reply_markup=keyboard
@@ -143,7 +143,9 @@ async def send_date(callback: types.CallbackQuery, state: FSMContext):
     keyboard = create_calendar(free_days)
 
     await callback.message.edit_text(
-        text=lexicon.REG_DATE.format(staff_name, service_title),
+        text=lexicon.REG_DATE.format(staff_name, service_title,
+                                     state_data['more_info'],
+                                     state_data['seance_length']),
         reply_markup=keyboard
     )
     await state.set_state(SignUpFSM.date)
@@ -168,7 +170,8 @@ async def send_time(callback: types.CallbackQuery, state: FSMContext):
     keyboard_times = create_inline_kb(adjust, *free_times)
 
     await callback.message.edit_text(
-        text=lexicon.REG_TIME.format(staff_name, service_title, norm_date),
+        text=lexicon.REG_TIME.format(staff_name, service_title, state_data['price_min'],
+                                     state_data['seance_length'], norm_date),
         reply_markup=keyboard_times
     )
     await state.set_state(SignUpFSM.time)
@@ -194,7 +197,9 @@ async def pre_check(
     keyboard = create_inline_kb(adjust, **accept_cancel)
 
     await callback.message.edit_text(
-        text=lexicon.REG_CHECK.format(staff_name, service_title, date, time),
+        text=lexicon.REG_CHECK.format(staff_name, service_title,
+                                      state_data['price_min'],
+                                      state_data['seance_length'], date, time),
         reply_markup=keyboard
     )
     await state.set_state(SignUpFSM.check_data)
@@ -241,54 +246,15 @@ async def get_phone(message: Message, state: FSMContext):
     sent_message_id = sent_message.message_id
     await state.update_data(id_message=sent_message_id)
 
-    await state.set_state(SignUpFSM.phone)
+    await state.set_state(SignUpFSM.check_data)
     logger.debug('Send message from handler get_phone')
     logger.debug('Change State to phone')
 
 
-@router.message(StateFilter(SignUpFSM.phone))
-async def get_email(message: Message, state: FSMContext):
-    await state.update_data(phone=message.text)
-
-    state_data = await state.get_data()
-    message_id = state_data['id_message']
-    await bot.delete_message(chat_id=message.chat.id, message_id=message_id)
-    await message.delete()
-
-    sent_message = await message.answer(
-        text=lexicon.REG_MAIL)
-
-    sent_message_id = sent_message.message_id
-    await state.update_data(id_message=sent_message_id)
-
-    await state.set_state(SignUpFSM.email)
-    logger.debug('Send message from handler get_email')
-    logger.debug('Change State to email')
-
-
-@router.message(StateFilter(SignUpFSM.email))
-async def get_comment(message: Message, state: FSMContext):
-    await state.update_data(email=message.text)
-
-    state_data = await state.get_data()
-    message_id = state_data['id_message']
-    await bot.delete_message(chat_id=message.chat.id, message_id=message_id)
-    await message.delete()
-
-    sent_message = await message.answer(
-        text=lexicon.REG_COMMENT)
-
-    sent_message_id = sent_message.message_id
-    await state.update_data(id_message=sent_message_id)
-
-    await state.set_state(SignUpFSM.comment)
-    logger.debug('Send message from handler get_comment')
-    logger.debug('Change State to comment')
-
-
-@router.message(StateFilter(SignUpFSM.comment))
+@router.message(StateFilter(SignUpFSM.check_data))
 async def creating_and_check(message: Message, state: FSMContext):
 
+    await state.update_data(phone=message.text)
     adjust = [2, 2]
     keyboard = create_inline_kb(adjust, **accept_cancel)
 
@@ -346,7 +312,9 @@ async def accept_creating(callback: types.CallbackQuery, state: FSMContext,
 
         await callback.answer(text=lexicon.REG_ACCEPT_FINAL)
         await callback.message.answer(
-            text=lexicon.REG_FINAL.format(staff_name, service_title, date,
+            text=lexicon.REG_FINAL.format(staff_name, service_title,
+                                          state_data['price_min'],
+                                          state_data['seance_length'], date,
                                           time)
         )
         await state.clear()

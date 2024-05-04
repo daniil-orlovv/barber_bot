@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 
 from aiogram import F, Router, types
@@ -38,6 +39,7 @@ async def all_records(message: Message, session: Session, state: FSMContext):
 @router.callback_query(StateFilter(GetEditRecordFSM.choise_records))
 async def one_record(callback: types.CallbackQuery, state: FSMContext):
 
+    await callback.message.edit_text('Зарузка записи...')
     record_id = callback.data
     print(record_id)
     record = get_record_by_id(record_id)
@@ -59,6 +61,7 @@ async def one_record(callback: types.CallbackQuery, state: FSMContext):
 
     adjust = (2, 2)
     inline_keyboard = create_inline_kb(adjust, **edit_cancel)
+    time.sleep(0.5)
     await callback.message.edit_text(
         text=(f'Услуга: {title}\n'
               f'Мастер: {name_staff}\n'
@@ -71,10 +74,12 @@ async def one_record(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(StateFilter(GetEditRecordFSM.choise_actions))
 async def edit_or_cancel(callback: types.CallbackQuery, state: FSMContext):
     if callback.data == 'edit':
+        await callback.message.edit_text('Ищу свободные даты...')
         state_data = await state.get_data()
         staff_id = state_data['staff_id']
         free_days = get_free_date(staff_id)
         inline_calendar = create_calendar(free_days)
+        time.sleep(0.5)
         await callback.message.edit_text(
             text='Выберите дату:',
             reply_markup=inline_calendar
@@ -82,9 +87,10 @@ async def edit_or_cancel(callback: types.CallbackQuery, state: FSMContext):
         await state.set_state(GetEditRecordFSM.edit_record_date)
 
     elif callback.data == 'cancel':
-
+        await callback.message.edit_text('Зарузка...')
         adjust = (2, 2)
         inline_keyboard = create_inline_kb(adjust, **accept_cancel)
+        time.sleep(0.5)
         await callback.message.edit_text(
             text='Отменить запись?',
             reply_markup=inline_keyboard
@@ -95,6 +101,7 @@ async def edit_or_cancel(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(StateFilter(GetEditRecordFSM.edit_record_date))
 async def send_time(callback: types.CallbackQuery, state: FSMContext):
 
+    await callback.message.edit_text('Ищу свободное время...')
     month, day = callback.data.split('-')
     date = f'{current_year}-{month}-{day}'
     state_data = await state.get_data()
@@ -104,6 +111,7 @@ async def send_time(callback: types.CallbackQuery, state: FSMContext):
     free_times = get_free_time(staff_id, date)
     adjust = (4, 4, 4, 4, 4, 4,)
     keyboard_times = create_inline_kb(adjust, *free_times)
+    time.sleep(0.5)
     await callback.message.edit_text(
         text='Выберите время:',
         reply_markup=keyboard_times
@@ -114,18 +122,21 @@ async def send_time(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(StateFilter(GetEditRecordFSM.edit_record_time))
 async def send_accept_for_edit(callback: types.CallbackQuery,
                                state: FSMContext):
-    time = callback.data
+
+    await callback.message.edit_text('Зарузка...')
+    new_time = callback.data
     state_data = await state.get_data()
-    await state.update_data(new_time=time)
+    await state.update_data(new_time=new_time)
     adjust = (2, 2)
     inline_keyboard = create_inline_kb(adjust, **accept_cancel)
 
+    time.sleep(0.5)
     await callback.message.edit_text(
         text=(f'Услуга: {state_data["title"]}\n'
               f'Мастер: {state_data["name_staff"]}\n'
               f'Стоимость: {state_data["cost"]} руб.\n'
               f'Дата: {state_data["new_date"]}'
-              f'Время: {time}\n\n'
+              f'Время: {new_time}\n\n'
               'Перенести запись на это время?'),
         reply_markup=inline_keyboard
     )
@@ -137,6 +148,8 @@ async def send_accept_for_edit(callback: types.CallbackQuery,
 async def update_record(callback: types.CallbackQuery, state: FSMContext):
 
     if callback.data == 'accept':
+
+        await callback.message.edit_text('Переношу запись...')
         state_data = await state.get_data()
         title = state_data['title']
         name_staff = state_data['name_staff']
@@ -146,6 +159,7 @@ async def update_record(callback: types.CallbackQuery, state: FSMContext):
 
         edit_record(state_data)
 
+        time.sleep(0.5)
         await callback.message.edit_text(
             text=(f'Запись перенесена!\n\n'
                   f'Услуга: {title}\n'
@@ -157,6 +171,8 @@ async def update_record(callback: types.CallbackQuery, state: FSMContext):
         await state.clear()
 
     elif callback.data == 'cancel':
+        await callback.message.edit_text('Отменяю перенос...')
+        time.sleep(0.5)
         await callback.message.edit_message(
             text=('Перенос записи отменен!'))
         await state.clear()
@@ -166,8 +182,10 @@ async def update_record(callback: types.CallbackQuery, state: FSMContext):
 async def send_accept_for_cancel(callback: types.CallbackQuery,
                                  state: FSMContext):
 
+    await callback.message.edit_text('Зарузка...')
     adjust = (2, 2)
     inline_keyboard = create_inline_kb(adjust, **accept_cancel)
+    time.sleep(0.5)
     await callback.message.edit_text(
         text='Вы уверены что хотите отменить запись?',
         reply_markup=inline_keyboard
@@ -179,15 +197,19 @@ async def send_accept_for_cancel(callback: types.CallbackQuery,
 async def cancel_record(callback: types.CallbackQuery, state: FSMContext):
 
     if callback.data == 'accept':
+        await callback.message.edit_text('Отменяю запись...')
         state_data = await state.get_data()
         record_id = state_data['record_id']
         delete_record(record_id)
+        time.sleep(0.5)
         await callback.message.edit_text(
             text='Запись успешно отменена!'
         )
         await state.clear()
 
     elif callback.data == 'cancel':
+        await callback.message.edit_text('Загрузка...')
+        time.sleep(0.5)
         await callback.message.edit_text(
             text=('Запись не отменена!'))
         await state.clear()

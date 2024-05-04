@@ -133,8 +133,8 @@ async def create_session_api(data):
         data_for_request = {
             "phone": data['phone'],
             "fullname": data['name'],
-            "email": data['email'],
-            "comment": data['comment'],
+            "email": "",
+            "comment": "",
             "type": "mobile",
             "notify_by_sms": 2,
             "notify_by_email": 24,
@@ -198,11 +198,8 @@ def get_all_records_by_client(ycl_id):
         date = record.get('date')
         new_date = return_date_for_records(date)
         title_date = ' '.join([title, new_date])
-        print(f'title_date: {title_date}')
         record_id = record.get('id')
-        print(f'record_id: {record_id}')
         records[title_date] = str(record_id)
-    print(f'records: {records}')
     return records
 
 

@@ -24,7 +24,7 @@ class DataForRecord(Base):
     time = Column(String())
     name = Column(String(), nullable=False)
     phone = Column(String())
-    email = Column(String(100), nullable=False)
+    email = Column(String(100), nullable=True)
     comment = Column(String(100), nullable=True)
     record_hash = Column(String(100))
     record_id = Column(String(100))
