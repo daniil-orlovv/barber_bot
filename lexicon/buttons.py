@@ -2,9 +2,10 @@ from config_data.config import (ADRESS_URL_GOOGLE, ADRESS_URL_YANDEX,
                                 ADRESS_URL_2GIS)
 
 start_buttons = {
-    'buttons': ['Мои записи 📖', 'Записаться ✏️', 'Все услуги ✂️', 'Контакты 📍',
-                'Отмена ❌'],
-    'adjust': (2, 2, 1)
+    'buttons': ['Мои записи 📖', 'Записаться ✏️', 'Все услуги ✂️',
+                'Контакты 📍', 'Оставить отзыв мастеру 💇',
+                'Оставить отзыв барбершопу ✂️', 'Отмена ❌'],
+    'adjust': (2, 2, 2, 1)
 }
 
 contacts_buttons = {

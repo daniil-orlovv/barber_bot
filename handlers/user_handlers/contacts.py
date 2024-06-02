@@ -1,5 +1,3 @@
-import logging
-
 from aiogram import F, Router
 from aiogram.types import Message
 
@@ -8,7 +6,6 @@ from keyboards.keyboards_utils import create_inline_kb
 import lexicon.lexicon_ru as lexicon
 from lexicon.buttons import contacts_buttons
 
-logger = logging.getLogger(__name__)
 router = Router()
 
 
@@ -20,4 +17,3 @@ async def contacts(message: Message):
 
     await message.answer_location(location.latitude, location.longitude)
     await message.answer(text=lexicon.ABOUT, reply_markup=inline_keyboard)
-    logger.debug('Send message from handler contacts')

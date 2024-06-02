@@ -1,11 +1,8 @@
-import logging
-
 from aiogram import F, Router
 from aiogram.types import Message
 
 from external_services.other_api import get_all_services
 
-logger = logging.getLogger(__name__)
 router = Router()
 
 
@@ -18,4 +15,3 @@ async def services(message: Message):
     for title, cost in info_services.items():
         mess += f"✂️{title} -  💵{cost} руб.\n"
     await message.answer(text=mess)
-    logger.debug('Send message from handler contacts')

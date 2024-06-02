@@ -22,6 +22,7 @@ from filters.filters import (CheckFreeStaff, CheckFreeService, CheckFreeDate,
 from states.states import SignUpFSM
 import lexicon.lexicon_ru as lexicon
 from lexicon.buttons import accept_cancel, start_buttons
+from handlers.user_handlers.feedbacks import get_feedback
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,6 @@ async def start(message: Message):
 
     keyboard = create_kb(start_buttons['adjust'], *start_buttons['buttons'])
     await message.answer(text=lexicon.WELCOME_TEXT, reply_markup=keyboard)
-    logger.debug('Send message from handler start')
 
 
 @router.message(F.text == 'Записаться ✏️')
@@ -54,9 +54,6 @@ async def send_masters(message: Message, state: FSMContext):
     await state.update_data(all_staffs=inverted_staffs)
     await state.set_state(SignUpFSM.staff)
 
-    logger.debug('Send message from handler contacts')
-    logger.debug('Change State to staff')
-
 
 @router.callback_query(CheckFreeStaff(), StateFilter(SignUpFSM.staff))
 async def send_service(callback: types.CallbackQuery, state: FSMContext):
@@ -72,7 +69,7 @@ async def send_service(callback: types.CallbackQuery, state: FSMContext):
     inverted_services = {v: k for k, v in free_services.items()}
     await state.update_data(all_services=inverted_services)
 
-    adjust = (2, 2, 2)
+    adjust = (1, 1)
     keyboard_services = create_inline_kb(adjust, **free_services)
 
     time.sleep(0.5)
@@ -81,8 +78,6 @@ async def send_service(callback: types.CallbackQuery, state: FSMContext):
         reply_markup=keyboard_services
     )
     await state.set_state(SignUpFSM.service)
-    logger.debug('Send message from handler send_service')
-    logger.debug('Change State to service')
 
 
 @router.callback_query(StateFilter(SignUpFSM.service), CheckFreeService())
@@ -107,8 +102,6 @@ async def send_date(callback: types.CallbackQuery, state: FSMContext):
         reply_markup=keyboard
     )
     await state.set_state(SignUpFSM.date)
-    logger.debug('Send message from handler send_date')
-    logger.debug('Change State to date')
 
 
 @router.callback_query(StateFilter(SignUpFSM.date), CheckFreeDate())
@@ -134,8 +127,6 @@ async def send_time(callback: types.CallbackQuery, state: FSMContext):
         reply_markup=keyboard_times
     )
     await state.set_state(SignUpFSM.time)
-    logger.debug('Send message from handler send_time')
-    logger.debug('Change State to time')
 
 
 @router.callback_query(StateFilter(SignUpFSM.time), CheckFreeTime())
@@ -162,8 +153,6 @@ async def pre_check(
         reply_markup=keyboard
     )
     await state.set_state(SignUpFSM.check_data)
-    logger.debug('Send message from handler pre_check')
-    logger.debug('Change State to check_data')
 
 
 @router.callback_query(StateFilter(SignUpFSM.check_data),
@@ -176,8 +165,6 @@ async def cancel(callback: types.CallbackQuery, state: FSMContext):
         text='Вы отменили процесс записи.'
     )
     await state.clear()
-    logger.debug('Send message from handler cancel')
-    logger.debug('Change State to default_state')
 
 
 @router.callback_query(StateFilter(SignUpFSM.check_data),
@@ -191,8 +178,6 @@ async def get_name(callback: types.CallbackQuery, state: FSMContext):
     id_message = callback.message.message_id
     await state.update_data(id_message=id_message)
     await state.set_state(SignUpFSM.name)
-    logger.debug('Send message from handler get_name')
-    logger.debug('Change State to name')
 
 
 @router.message(StateFilter(SignUpFSM.name), F.text.isalpha())
@@ -212,8 +197,6 @@ async def get_phone(message: Message, state: FSMContext, bot: Bot):
     await state.update_data(id_message=sent_message_id)
 
     await state.set_state(SignUpFSM.check_data)
-    logger.debug('Send message from handler get_phone')
-    logger.debug('Change State to phone')
 
 
 @router.message(StateFilter(SignUpFSM.check_data))
@@ -237,18 +220,30 @@ async def creating_and_check(message: Message, state: FSMContext, bot: Bot):
     await state.update_data(id_message=sent_message_id)
 
     await state.set_state(SignUpFSM.accept_session)
-    logger.debug('Send message from handler creating_and_check')
-    logger.debug('Change State to accept_session')
 
 
 @router.callback_query(StateFilter(SignUpFSM.accept_session),
                        CheckCallbackAccept())
 async def accept_creating(callback: types.CallbackQuery, state: FSMContext,
-                          session: Session):
+                          session: Session, scheduler, bot):
 
     await callback.message.edit_text('Записываю на сеанс... ⏳')
     data_for_request = await state.get_data()
+    print(data_for_request['date'], data_for_request['time']) # -> 2024-6-20 17:00
+    date_record = data_for_request['date']
+    date_record_split = date_record.split('-')
+    time_record = data_for_request['time']
+    time_record_split = time_record.split(':')
+    date_for_start_job = date_record_split + time_record_split
+    date_for_start_job = [int(x) for x in date_for_start_job]
+    user_id = callback.from_user.id
     response = await create_session_api(data_for_request)
+    # run_date = datetime.datetime(*date_for_start_job) + datetime.timedelta(hours=2)
+    run_date = datetime.datetime.now() + datetime.timedelta(seconds=5)
+    print(f'run_date:{run_date}')
+    scheduler.add_job(get_feedback, 'date',
+                      run_date=run_date, jobstore='default',
+                      args=[bot, user_id])
     response_data = response.json()
     if response.status_code == 201:
 
@@ -274,8 +269,6 @@ async def accept_creating(callback: types.CallbackQuery, state: FSMContext,
                                           times)
         )
         await state.clear()
-        logger.debug('Send message from handler accept_creating')
-        logger.debug('Change State to default_state')
         logger.debug(
             "Отправлен POST-запрос на создание записи.\n"
             f'Ответ: {response.json()}')
@@ -294,6 +287,3 @@ async def cancel_creating(message: Message, state: FSMContext):
 
     await message.answer(text=lexicon.REG_MAIN_CANCEL, reply_markup=keyboard)
     await state.clear()
-
-    logger.debug('Send message from handler cancel_creating')
-    logger.debug('Change State to default_state')

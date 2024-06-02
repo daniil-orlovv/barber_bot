@@ -5,7 +5,6 @@ from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
 from sqlalchemy.orm import sessionmaker
 
-logger = logging.getLogger(__name__)
 
 
 class DBMiddleware(BaseMiddleware):
@@ -24,9 +23,7 @@ class DBMiddleware(BaseMiddleware):
         Session = sessionmaker(bind=engine)
         session = Session(bind=connection)
         data['session'] = session
-        logger.debug('DBMiddleware has worked.')
 
         result = await handler(event, data)
 
-        logger.debug('DBMiddleware has worked.')
         return result

@@ -21,3 +21,10 @@ class GetEditRecordFSM(StatesGroup):
     edit_accepting = State()
     cancel_record = State()
     cancel_record_accepting = State()
+
+
+class Feedback(StatesGroup):
+    waiting_text = State()
+    waiting_mark = State()
+    waiting_name = State()
+    waiting_accepting = State()

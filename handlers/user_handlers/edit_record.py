@@ -28,14 +28,19 @@ async def all_records(message: Message, session: Session, state: FSMContext):
     phone = get_phone_client_from_db(session, telegram_id)
     ycl_id = get_ycl_id(phone)
     records = get_all_records_by_client(ycl_id)
-    adjust = (1, 1, 1, 1, 1)
-    inline_keyboard = create_inline_kb(adjust, **records)
-    await message.answer(
-        text='Для просмотра, переноса или отмены - выберите запись:',
-        reply_markup=inline_keyboard
-    )
-    await state.set_state(GetEditRecordFSM.choise_records)
-
+    if records:
+        adjust = (1, 1, 1, 1, 1)
+        inline_keyboard = create_inline_kb(adjust, **records)
+        await message.answer(
+            text='Для просмотра, переноса или отмены - выберите запись:',
+            reply_markup=inline_keyboard
+        )
+        await state.set_state(GetEditRecordFSM.choise_records)
+    else:
+        await message.answer(
+            text='Записи отсутствуют.'
+        )
+        await state.clear()
 
 @router.callback_query(StateFilter(GetEditRecordFSM.choise_records))
 async def one_record(callback: types.CallbackQuery, state: FSMContext):

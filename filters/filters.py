@@ -78,3 +78,15 @@ class CheckCallbackCancel(BaseFilter):
         """
 
         return callback.data == 'cancel'
+
+
+class CheckCallbackFeedback(BaseFilter):
+
+    async def __call__(
+            self,
+            callback: CallbackQuery
+    ) -> bool:
+        """Метод проверяющий соответствие callback == "feedback"
+        """
+
+        return callback.data == 'feedback'

@@ -28,7 +28,9 @@ urls = {
     'delete_record':
         'https://api.yclients.com/api/v1/record/{}/{}',
     'get_all_services':
-        'https://api.yclients.com/api/v1/book_services/{}'
+        'https://api.yclients.com/api/v1/book_services/{}',
+    'feedback':
+        'https://api.yclients.com/api/v1/comments/{}/{}'
 }
 
 request_body = {
