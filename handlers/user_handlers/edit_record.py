@@ -1,46 +1,24 @@
 import time
 from datetime import datetime
 
-from aiogram import F, Router, types
+from aiogram import types, Router
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
-from sqlalchemy.orm import Session
 from keyboards.keyboards_utils import create_inline_kb, create_calendar
-from external_services.create_api import get_free_date, get_free_time
-from external_services.edit_api import (get_all_records_by_client,
-                                        get_record_by_id, edit_record,
-                                        delete_record, get_ycl_id)
-from utils.utils_db import get_phone_client_from_db
+from api.create_record import get_free_date, get_free_time
+from api.edit_record import edit_record
+from api.get_records import get_record_by_id
+from api.cancel_record import delete_record
 from utils.utils import return_date_for_records
+from utils.utils_db import get_user_token_of_client
 from states.states import GetEditRecordFSM
 from lexicon.buttons import edit_cancel, accept_cancel
 
 current_year = datetime.now().year
 
+
 router = Router()
 
-
-@router.message(F.text == 'Мои записи 📖')
-async def all_records(message: Message, session: Session, state: FSMContext):
-
-    telegram_id = message.from_user.id
-    phone = get_phone_client_from_db(session, telegram_id)
-    ycl_id = get_ycl_id(phone)
-    records = get_all_records_by_client(ycl_id)
-    if records:
-        adjust = (1, 1, 1, 1, 1)
-        inline_keyboard = create_inline_kb(adjust, **records)
-        await message.answer(
-            text='Для просмотра, переноса или отмены - выберите запись:',
-            reply_markup=inline_keyboard
-        )
-        await state.set_state(GetEditRecordFSM.choise_records)
-    else:
-        await message.answer(
-            text='Записи отсутствуют.'
-        )
-        await state.clear()
 
 @router.callback_query(StateFilter(GetEditRecordFSM.choise_records))
 async def one_record(callback: types.CallbackQuery, state: FSMContext):
@@ -48,7 +26,9 @@ async def one_record(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.edit_text('Загружаю запись... ⏳')
     record_id = callback.data
     print(record_id)
-    record = get_record_by_id(record_id)
+    telegram_id = callback.from_user.id
+    user_token = get_user_token_of_client(telegram_id)
+    record = get_record_by_id(record_id, user_token)
     title = record.get('title')
     name_staff = record.get('name_staff')
     cost = record.get('cost')
@@ -206,7 +186,9 @@ async def cancel_record(callback: types.CallbackQuery, state: FSMContext):
         await callback.message.edit_text('Отменяю запись... ⏳')
         state_data = await state.get_data()
         record_id = state_data['record_id']
-        delete_record(record_id)
+        telegram_id = callback.from_user.id
+        user_token = get_user_token_of_client(telegram_id)
+        delete_record(record_id, user_token)
         time.sleep(0.5)
         await callback.message.edit_text(
             text='Запись успешно отменена! ✅'

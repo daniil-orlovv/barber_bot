@@ -1,7 +1,7 @@
 from aiogram import F, Router
 from aiogram.types import Message
 
-from external_services.other_api import get_all_services
+from api.get_services import get_all_services
 
 router = Router()
 

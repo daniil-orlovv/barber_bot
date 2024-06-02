@@ -1,10 +1,31 @@
 from config_data.config import PARTNER_TOKEN, USER_TOKEN
 
-headers = {
-    'Authorization': f'Bearer {PARTNER_TOKEN}, User {USER_TOKEN}',
+headers_for_create = {
+    'Authorization': f'Bearer {PARTNER_TOKEN}',
     'Accept': 'application/vnd.api.v2+json',
     'Content-type': 'application/json'
 }
+
+
+headers_for_edit = {
+    'Authorization': f'Bearer {PARTNER_TOKEN}',
+    'Accept': 'application/vnd.api.v2+json',
+    'Content-type': 'application/json'
+}
+
+
+headers_for_get = {
+    'Authorization': 'Bearer {PARTNER_TOKEN}, User {}',
+    'Accept': 'application/vnd.api.v2+json',
+    'Content-type': 'application/json'
+}
+
+headers_for_cancel = {
+    'Authorization': 'Bearer {PARTNER_TOKEN}, User {}',
+    'Accept': 'application/vnd.api.v2+json',
+    'Content-type': 'application/json'
+}
+
 
 urls = {
     'get_free_staff':
@@ -17,15 +38,7 @@ urls = {
         'https://api.yclients.com/api/v1/book_services/{}?staff_id={}',
     'create_session_api':
         'https://api.yclients.com/api/v1/book_record/{}/',
-    'get_ycl_id':
-        'https://api.yclients.com/api/v1/company/{}/clients/search',
-    'get_all_records_by_client':
-        'https://api.yclients.com/api/v1/records/{}?client_id={}',
-    'get_record_by_id':
-        'https://api.yclients.com/api/v1/record/{}/{}',
     'edit_record':
-        'https://api.yclients.com/api/v1/record/{}/{}',
-    'delete_record':
         'https://api.yclients.com/api/v1/record/{}/{}',
     'get_all_services':
         'https://api.yclients.com/api/v1/book_services/{}',

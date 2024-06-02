@@ -2,7 +2,7 @@ from aiogram.types import CallbackQuery
 from aiogram.filters import BaseFilter
 from aiogram.fsm.context import FSMContext
 
-from external_services.create_api import (get_free_staff, get_free_services,
+from external_services.create_record import (get_free_staff, get_free_services,
                                           get_free_date, get_free_time)
 
 

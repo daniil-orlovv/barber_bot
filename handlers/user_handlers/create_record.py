@@ -10,12 +10,10 @@ from sqlalchemy.orm import Session
 
 from keyboards.keyboards_utils import (create_inline_kb, create_calendar,
                                        create_kb)
-from external_services.create_api import (get_free_date, get_free_time,
-                                          get_free_services, get_free_staff,
-                                          create_session_api)
-from external_services.edit_api import get_ycl_id
+from api.create_record import (get_free_date, get_free_time,
+                               get_free_services, get_free_staff,
+                               create_record)
 from utils.utils import to_normalize_date
-from utils.utils_db import add_client_in_db
 from filters.filters import (CheckFreeStaff, CheckFreeService, CheckFreeDate,
                              CheckFreeTime, CheckCallbackAccept,
                              CheckCallbackCancel)
@@ -237,23 +235,17 @@ async def accept_creating(callback: types.CallbackQuery, state: FSMContext,
     date_for_start_job = date_record_split + time_record_split
     date_for_start_job = [int(x) for x in date_for_start_job]
     user_id = callback.from_user.id
-    response = await create_session_api(data_for_request)
+    response = await create_record(data_for_request)
     # run_date = datetime.datetime(*date_for_start_job) + datetime.timedelta(hours=2)
+
     run_date = datetime.datetime.now() + datetime.timedelta(seconds=5)
     print(f'run_date:{run_date}')
     scheduler.add_job(get_feedback, 'date',
                       run_date=run_date, jobstore='default',
                       args=[bot, user_id])
+
     response_data = response.json()
     if response.status_code == 201:
-
-        data = await state.get_data()
-        client_ycl_id = get_ycl_id(data['phone'])
-        client_telegram_id = callback.from_user.id
-        await state.update_data(client_ycl_id=client_ycl_id,
-                                client_telegram_id=client_telegram_id)
-        data = await state.get_data()
-        add_client_in_db(session, data)
 
         state_data = await state.get_data()
         staff_name = state_data['staff_name']
@@ -269,9 +261,6 @@ async def accept_creating(callback: types.CallbackQuery, state: FSMContext,
                                           times)
         )
         await state.clear()
-        logger.debug(
-            "Отправлен POST-запрос на создание записи.\n"
-            f'Ответ: {response.json()}')
     elif response.status_code == 422:
         message = response_data['meta']['message']
         await callback.message.answer(

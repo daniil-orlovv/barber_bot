@@ -12,3 +12,4 @@ class Client(Base):
     ycl_id = Column(Integer)
     telegram_id = Column(Integer)
     phone = Column(String)
+    user_token = Column(String)

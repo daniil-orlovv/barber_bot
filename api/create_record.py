@@ -6,7 +6,7 @@ from http import HTTPStatus
 from config_data.config import COMPANY_ID
 from utils.utils import return_date_iso8601
 
-from external_services.settings_api import urls, headers
+from api.settings_api import urls, headers
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +110,7 @@ def get_free_services(staff_id):
         logger.error(f'Превышено время ожидания ответа: {error}')
 
 
-async def create_session_api(data):
+async def create_record(data):
     try:
         if not data:
             logger.error('В "data" отсутствуют данные!')
