@@ -3,19 +3,27 @@ from requests.exceptions import ConnectionError, Timeout
 import datetime
 import logging
 from http import HTTPStatus
-from config_data.config import COMPANY_ID
+from config_data.config import COMPANY_ID, PARTNER_TOKEN
 from utils.utils import return_date_iso8601
 
-from api.settings_api import urls, headers
+from api.settings_api import urls
 
 logger = logging.getLogger(__name__)
 
 current_year = datetime.datetime.now().year
 
 
+headers = {
+    'Authorization': f'Bearer {PARTNER_TOKEN}',
+    'Accept': 'application/vnd.api.v2+json',
+    'Content-type': 'application/json'
+}
+
+
 def get_free_staff():
+
     try:
-        url = urls['get_free_staff'].format(COMPANY_ID)
+        url = urls['get_free_staffs'].format(COMPANY_ID)
         response = requests.get(url, headers=headers, timeout=30)
         if response.status_code != HTTPStatus.OK:
             logger.error(f'Bad response: {response.status_code}')

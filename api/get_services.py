@@ -1,7 +1,14 @@
 import requests
 
-from config_data.config import COMPANY_ID
-from api.settings_api import urls, headers
+from config_data.config import COMPANY_ID, PARTNER_TOKEN
+from api.settings_api import urls
+
+
+headers = {
+    'Authorization': f'Bearer {PARTNER_TOKEN}',
+    'Accept': 'application/vnd.api.v2+json',
+    'Content-type': 'application/json'
+}
 
 
 def get_all_services():

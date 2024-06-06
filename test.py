@@ -1,38 +1,9 @@
-import requests
-
-
-USER_TOKEN = '420ab5c67606ab449059fa89baa35ed7'
-PARTNER_TOKEN = 'cc9arzfwhzmcyd9rzdpu'
-COMPANY_ID = '1055113'
-
-headers = {
-    'Authorization': f'Bearer {PARTNER_TOKEN}, User {USER_TOKEN}',
-    'Accept': 'application/vnd.api.v2+json',
-    'Content-type': 'application/json'
-}
-
-
-def create_list_records_of_company
-
-
-def get_all_records_of_client_by_company():
-    url = 'https://api.yclients.com/api/v1/user/records/'
-    response = requests.get(url, headers=headers)
-    response_json = response.json()
-    records = response_json['data']
-    print(records)
-    client_records = []
-    for record in records:
-        print(record)
-        company = record['company']
-        print(company)
-        id_company = company['id']
-        print(id_company)
-        if str(id_company) != COMPANY_ID:
-            continue
-        else:
-            client_records.append(record)
-    return client_records
-
-
-print(f'Записи по моей компании: {get_all_records_of_client_by_company()}')
+date = '2024-6-20' # -> 2024-6-20 17:00
+time = '17:00'
+date_record = date
+date_record_split = date_record.split('-')
+time_record = time
+time_record_split = time_record.split(':')
+date_for_start_job = date_record_split + time_record_split
+date_for_start_job = [int(x) for x in date_for_start_job]
+print(date_for_start_job)

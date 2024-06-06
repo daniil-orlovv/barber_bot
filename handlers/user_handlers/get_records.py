@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from keyboards.keyboards_utils import create_inline_kb
 from api.get_records import (get_title_and_date_of_records,
                              selection_of_records_by_company)
-from utils.utils_db import get_user_token_of_client
 from states.states import GetEditRecordFSM
 
 current_year = datetime.now().year
@@ -20,8 +19,7 @@ router = Router()
 async def all_records(message: Message, session: Session, state: FSMContext):
 
     telegram_id = message.from_user.id
-    user_token = get_user_token_of_client(telegram_id)
-    records_of_clients = selection_of_records_by_company(user_token)
+    records_of_clients = selection_of_records_by_company(session, telegram_id)
     records = get_title_and_date_of_records(records_of_clients)
     if records:
         adjust = (1, 1, 1, 1, 1)

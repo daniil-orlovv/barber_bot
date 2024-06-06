@@ -10,6 +10,7 @@ class SignUpFSM(StatesGroup):
     name = State()
     phone = State()
     check_data = State()
+    check_record = State()
     accept_session = State()
 
 

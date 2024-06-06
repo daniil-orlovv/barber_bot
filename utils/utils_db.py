@@ -35,3 +35,10 @@ def get_user_token_of_client(session, telegram_id):
         Client.telegram_id == telegram_id).first()
     user_token = user.user_token
     return user_token
+
+
+def get_phone_by_telegram_id(session, telegram_id):
+    user = session.query(Client).filter(
+        Client.telegram_id == telegram_id).first()
+    phone = user.phone
+    return phone

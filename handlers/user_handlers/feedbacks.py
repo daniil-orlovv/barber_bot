@@ -8,8 +8,9 @@ from states.states import Feedback
 from lexicon.buttons import accept_cancel
 from filters.filters import CheckCallbackFeedback
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from external_services.other_api import feedback
-
+from api.get_feedback import feedback
+from utils.utils_db import get_user_token_of_client
+from sqlalchemy.orm import Session
 
 router = Router()
 
@@ -102,7 +103,8 @@ async def get_name_feedback(message, state: FSMContext):
 
 
 @router.callback_query(StateFilter(Feedback.waiting_accepting))
-async def acceptng_feedback(callback: types.CallbackQuery, state: FSMContext):
+async def acceptng_feedback(callback: types.CallbackQuery, session: Session,
+                            state: FSMContext):
 
     if callback.data == 'accept':
         await callback.message.edit_text('Отправляю отзыв... ⏳')
@@ -112,7 +114,9 @@ async def acceptng_feedback(callback: types.CallbackQuery, state: FSMContext):
         mark = state_data['mark']
         name = state_data['name']
         print(name, text, mark)
-        await feedback(mark, text, name)
+        telegram_id = callback.from_user.id
+        user_token = get_user_token_of_client(session, telegram_id)
+        feedback(mark, text, name, user_token)
 
         time.sleep(0.5)
         await callback.message.edit_text(

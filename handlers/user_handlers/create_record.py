@@ -13,13 +13,14 @@ from keyboards.keyboards_utils import (create_inline_kb, create_calendar,
 from api.create_record import (get_free_date, get_free_time,
                                get_free_services, get_free_staff,
                                create_record)
+from api.check_record import check_record_for_create
 from utils.utils import to_normalize_date
 from filters.filters import (CheckFreeStaff, CheckFreeService, CheckFreeDate,
                              CheckFreeTime, CheckCallbackAccept,
-                             CheckCallbackCancel)
+                             CheckCallbackCancel, CheckCallbackRecreateRecord)
 from states.states import SignUpFSM
 import lexicon.lexicon_ru as lexicon
-from lexicon.buttons import accept_cancel, start_buttons
+from lexicon.buttons import accept_cancel, start_buttons, recreate_record
 from handlers.user_handlers.feedbacks import get_feedback
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,22 @@ async def send_masters(message: Message, state: FSMContext):
 
     await message.delete()
     await message.answer(text=lexicon.REG_MASTER, reply_markup=keyboard_inline)
+
+    await state.update_data(all_staffs=inverted_staffs)
+    await state.set_state(SignUpFSM.staff)
+
+
+@router.callback_query(CheckCallbackRecreateRecord())
+async def send_masters_recreate(callback, state: FSMContext):
+
+    free_staffs = get_free_staff()
+    inverted_staffs = {v: k for k, v in free_staffs.items()}
+
+    adjust = (2, 2, 2)
+    keyboard_inline = create_inline_kb(adjust, **free_staffs)
+
+    await callback.message.edit_text(
+        text=lexicon.REG_MASTER, reply_markup=keyboard_inline)
 
     await state.update_data(all_staffs=inverted_staffs)
     await state.set_state(SignUpFSM.staff)
@@ -89,7 +106,7 @@ async def send_date(callback: types.CallbackQuery, state: FSMContext):
 
     all_services = state_data.get('all_services', {})
     service_title = all_services.get(service_id)
-    await state.update_data(service_title=service_title)
+    await state.update_data(service_title=service_title, service_id=service_id)
 
     free_days = get_free_date(staff_id)
     keyboard = create_calendar(free_days)
@@ -169,13 +186,26 @@ async def cancel(callback: types.CallbackQuery, state: FSMContext):
                        CheckCallbackAccept())
 async def get_name(callback: types.CallbackQuery, state: FSMContext):
 
-    await callback.message.edit_text('Загрузка... ⏳')
-    time.sleep(0.5)
-    await callback.message.edit_text(
-        text=lexicon.REG_NAME)
-    id_message = callback.message.message_id
-    await state.update_data(id_message=id_message)
-    await state.set_state(SignUpFSM.name)
+    state_data = await state.get_data()
+    response = check_record_for_create(state_data)
+    if response.status_code == 201:
+        await callback.message.edit_text('Загрузка... ⏳')
+        time.sleep(0.5)
+        await callback.message.edit_text(
+            text=lexicon.REG_NAME)
+        id_message = callback.message.message_id
+        await state.update_data(id_message=id_message)
+        await state.set_state(SignUpFSM.name)
+    elif response.status_code == 422:
+        response_data = response.json()
+        message = response_data['meta']['message']
+        adjust = (2, 2)
+        keyboard = create_inline_kb(adjust, **recreate_record)
+        await callback.message.edit_text(
+            text=message,
+            reply_markup=keyboard
+        )
+        await state.clear()
 
 
 @router.message(StateFilter(SignUpFSM.name), F.text.isalpha())

@@ -1,26 +1,13 @@
-from config_data.config import PARTNER_TOKEN, USER_TOKEN
+from config_data.config import PARTNER_TOKEN
 
-headers_for_create = {
+
+headers_bearer_token = {
     'Authorization': f'Bearer {PARTNER_TOKEN}',
     'Accept': 'application/vnd.api.v2+json',
     'Content-type': 'application/json'
 }
 
-
-headers_for_edit = {
-    'Authorization': f'Bearer {PARTNER_TOKEN}',
-    'Accept': 'application/vnd.api.v2+json',
-    'Content-type': 'application/json'
-}
-
-
-headers_for_get = {
-    'Authorization': 'Bearer {PARTNER_TOKEN}, User {}',
-    'Accept': 'application/vnd.api.v2+json',
-    'Content-type': 'application/json'
-}
-
-headers_for_cancel = {
+headers_bearer_user_tokens = {
     'Authorization': 'Bearer {PARTNER_TOKEN}, User {}',
     'Accept': 'application/vnd.api.v2+json',
     'Content-type': 'application/json'
@@ -28,8 +15,8 @@ headers_for_cancel = {
 
 
 urls = {
-    'get_free_staff':
-        'https://api.yclients.com/api/v1/company/{}/staff/',
+    'get_free_staffs':
+        'https://api.yclients.com/api/v1/book_staff/{}',
     'get_free_date':
         'https://api.yclients.com/api/v1/book_dates/{}?staff_id={}',
     'get_free_time':
@@ -38,8 +25,6 @@ urls = {
         'https://api.yclients.com/api/v1/book_services/{}?staff_id={}',
     'create_session_api':
         'https://api.yclients.com/api/v1/book_record/{}/',
-    'edit_record':
-        'https://api.yclients.com/api/v1/record/{}/{}',
     'get_all_services':
         'https://api.yclients.com/api/v1/book_services/{}',
     'feedback':

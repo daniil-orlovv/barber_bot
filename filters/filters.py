@@ -2,7 +2,7 @@ from aiogram.types import CallbackQuery
 from aiogram.filters import BaseFilter
 from aiogram.fsm.context import FSMContext
 
-from external_services.create_record import (get_free_staff, get_free_services,
+from api.create_record import (get_free_staff, get_free_services,
                                           get_free_date, get_free_time)
 
 
@@ -90,3 +90,15 @@ class CheckCallbackFeedback(BaseFilter):
         """
 
         return callback.data == 'feedback'
+
+
+class CheckCallbackRecreateRecord(BaseFilter):
+
+    async def __call__(
+            self,
+            callback: CallbackQuery
+    ) -> bool:
+        """Метод проверяющий соответствие callback == "recreate"
+        """
+
+        return callback.data == 'recreate'
