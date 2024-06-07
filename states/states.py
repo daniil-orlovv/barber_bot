@@ -29,3 +29,9 @@ class Feedback(StatesGroup):
     waiting_mark = State()
     waiting_name = State()
     waiting_accepting = State()
+
+
+class Auth(StatesGroup):
+    waiting_phone = State()
+    waiting_name = State()
+    waiting_code = State()

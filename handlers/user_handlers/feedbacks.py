@@ -5,12 +5,13 @@ from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from keyboards.keyboards_utils import create_inline_kb
 from states.states import Feedback
-from lexicon.buttons import accept_cancel
+from lexicon.buttons import accept_cancel, button_auth
 from filters.filters import CheckCallbackFeedback
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from api.get_feedback import feedback
 from utils.utils_db import get_user_token_of_client
 from sqlalchemy.orm import Session
+from utils.utils_db import check_exist_client_in_db
 
 router = Router()
 
@@ -41,13 +42,25 @@ async def start_feedback(callback: types.CallbackQuery, state: FSMContext):
 
 
 @router.message(F.text == 'Оставить отзыв мастеру 💇')
-async def start_feedback_message(message, state: FSMContext):
-    sent_message = await message.answer(
-        text='Напишите ваше впечатление:'
-    )
-    sent_message_id = sent_message.message_id
-    await state.update_data(id_message=sent_message_id)
-    await state.set_state(Feedback.waiting_text)
+async def start_feedback_message(message, state: FSMContext, session):
+
+    telegram_id = message.from_user.id
+
+    user_auth = check_exist_client_in_db(session, telegram_id)
+    if user_auth:
+        sent_message = await message.answer(
+            text='Напишите ваше впечатление:'
+        )
+        sent_message_id = sent_message.message_id
+        await state.update_data(id_message=sent_message_id)
+        await state.set_state(Feedback.waiting_text)
+    else:
+        adjust = (1,)
+        inline_keyboard = create_inline_kb(adjust, **button_auth)
+        await message.answer(
+                text='Для того, чтобы оставить отзыв - необходимо авторизоваться:',
+                reply_markup=inline_keyboard
+            )
 
 
 @router.message(StateFilter(Feedback.waiting_text))

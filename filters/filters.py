@@ -102,3 +102,15 @@ class CheckCallbackRecreateRecord(BaseFilter):
         """
 
         return callback.data == 'recreate'
+
+
+class CheckCallbackAuth(BaseFilter):
+
+    async def __call__(
+            self,
+            callback: CallbackQuery
+    ) -> bool:
+        """Метод проверяющий соответствие callback == "auth"
+        """
+
+        return callback.data == 'auth'

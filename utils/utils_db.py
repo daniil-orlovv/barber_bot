@@ -11,10 +11,9 @@ def create_object_client(name, telegram_id, phone, user_token):
     )
 
 
-def check_exist_client_in_db(session: Session, state_data):
-    ycl_id = state_data['client_ycl_id']
+def check_exist_client_in_db(session: Session, telegram_id):
     exist = session.query(Client.ycl_id).filter(
-        Client.ycl_id == ycl_id).first()
+        Client.telegram_id == telegram_id).first()
     return True if exist else False
 
 

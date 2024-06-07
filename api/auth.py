@@ -1,12 +1,14 @@
 import requests
 
-from config_data.config import PARTNER_TOKEN
+import json
+
+from config_data.config import COMPANY_ID, PARTNER_TOKEN
 
 from utils.utils_db import add_client_in_db
 
 
 def send_sms_code(phone, name):
-    url = 'https://api.yclients.com/api/v1/book_code/{company_id}'
+    url = f'https://api.yclients.com/api/v1/book_code/{COMPANY_ID}'
     data = {
         "phone": phone,
         "fulname": name
@@ -38,6 +40,8 @@ def auth(session, name, phone, code, telegram_id):
     response = requests.post(url, headers=headers, json=data)
     if response.status_code == 201:
         data_of_response = response.text
+        data_of_response = json.loads(data_of_response)
+        print(data_of_response)
         data = data_of_response['data']
         user_token = data['user_token']
         add_client_in_db(session, name, telegram_id, phone, user_token)
