@@ -11,6 +11,7 @@ from errors.errors import check_tokens
 from handlers.user_handlers import (create_record, edit_record, contacts,
                                     services, feedbacks, get_records,
                                     cancel_record, auth)
+from handlers.admin_handlers import get_jobs
 from models.models import Base
 from sqlalchemy import create_engine
 from sqlalchemy.pool import QueuePool
@@ -52,6 +53,7 @@ async def main():
         dp.include_router(get_records.router)
         dp.include_router(cancel_record.router)
         dp.include_router(auth.router)
+        dp.include_router(get_jobs.router)
         dp.update.outer_middleware(DBMiddleware())
         dp.workflow_data.update({
             'engine': engine, 'bot': bot, 'config': config,

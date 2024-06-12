@@ -22,6 +22,8 @@ from states.states import SignUpFSM
 import lexicon.lexicon_ru as lexicon
 from lexicon.buttons import accept_cancel, start_buttons, recreate_record
 from handlers.user_handlers.feedbacks import get_feedback
+from handlers.user_handlers.notifications import (notify_day, notify_hour,
+                                                  notify_month, notify_week)
 
 logger = logging.getLogger(__name__)
 
@@ -267,12 +269,31 @@ async def accept_creating(callback: types.CallbackQuery, state: FSMContext,
     user_id = callback.from_user.id
     response = await create_record(data_for_request)
     # run_date = datetime.datetime(*date_for_start_job) + datetime.timedelta(hours=2)
+    run_date = datetime.datetime.now() + datetime.timedelta(seconds=10)
 
-    run_date = datetime.datetime.now() + datetime.timedelta(seconds=5)
+    # notifications_day = datetime.datetime(*date_for_start_job) - datetime.timedelta(seconds=10)
+    # notifications_hours = datetime.datetime(*date_for_start_job) - datetime.timedelta(seconds=20)
+    notifications_day = datetime.datetime.now() + datetime.timedelta(seconds=20)
+    notifications_hours = datetime.datetime.now() + datetime.timedelta(seconds=30)
+    notifications_week = datetime.datetime.now() + datetime.timedelta(seconds=40)
+    notifications_month = datetime.datetime.now() + datetime.timedelta(seconds=50)
+
     print(f'run_date:{run_date}')
     scheduler.add_job(get_feedback, 'date',
                       run_date=run_date, jobstore='default',
                       args=[bot, user_id])
+    scheduler.add_job(notify_day, 'date',
+                      run_date=notifications_day, jobstore='default',
+                      args=[bot, user_id], id=f'notify_day_{user_id}')
+    scheduler.add_job(notify_hour, 'date',
+                      run_date=notifications_hours, jobstore='default',
+                      args=[bot, user_id], id=f'notify_hour_{user_id}')
+    scheduler.add_job(notify_week, 'date',
+                      run_date=notifications_week, jobstore='default',
+                      args=[bot, user_id], id=f'notify_week_{user_id}')
+    scheduler.add_job(notify_month, 'date',
+                      run_date=notifications_month, jobstore='default',
+                      args=[bot, user_id], id=f'notify_month_{user_id}')
 
     response_data = response.json()
     if response.status_code == 201:
