@@ -10,6 +10,7 @@ from utils.utils_db import get_user_token_of_client
 from states.states import GetEditRecordFSM
 from lexicon.buttons import accept_cancel
 from sqlalchemy.orm import Session
+from handlers.user_handlers.schedulers import remove_jobs
 
 current_year = datetime.now().year
 
@@ -34,7 +35,7 @@ async def send_accept_for_cancel(callback: types.CallbackQuery,
 
 @router.callback_query(StateFilter(GetEditRecordFSM.cancel_record_accepting))
 async def cancel_record(callback: types.CallbackQuery, session: Session,
-                        state: FSMContext):
+                        state: FSMContext, scheduler):
 
     if callback.data == 'accept':
         await callback.message.edit_text('Отменяю запись... ⏳')
@@ -43,6 +44,10 @@ async def cancel_record(callback: types.CallbackQuery, session: Session,
         telegram_id = callback.from_user.id
         user_token = get_user_token_of_client(session, telegram_id)
         delete_record(record_id, user_token)
+
+        user_id = callback.from_user.id
+        remove_jobs(scheduler, user_id)
+
         time.sleep(0.5)
         await callback.message.edit_text(
             text='Запись успешно отменена! ✅'

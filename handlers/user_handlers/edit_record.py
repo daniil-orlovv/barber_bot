@@ -14,6 +14,7 @@ from states.states import GetEditRecordFSM
 from lexicon.buttons import edit_cancel, accept_cancel
 
 from sqlalchemy.orm import Session
+from handlers.user_handlers.schedulers import rescheduler_jobs
 
 current_year = datetime.now().year
 
@@ -131,7 +132,7 @@ async def send_accept_for_edit(callback: types.CallbackQuery,
 
 @router.callback_query(StateFilter(GetEditRecordFSM.edit_accepting))
 async def update_record(callback: types.CallbackQuery, session: Session,
-                        state: FSMContext):
+                        state: FSMContext, scheduler):
 
     if callback.data == 'accept':
 
@@ -146,6 +147,15 @@ async def update_record(callback: types.CallbackQuery, session: Session,
         telegram_id = callback.from_user.id
         user_token = get_user_token_of_client(session, telegram_id)
         edit_record(state_data, user_token)
+
+        date_record = new_date  # -> 2024-6-20 17:00
+        date_record_split = date_record.split('-')
+        time_record = new_time  # -> 2024-6-20 17:00
+        time_record_split = time_record.split(':')
+        date_of_record = date_record_split + time_record_split
+        date_of_record = [int(x) for x in date_of_record]
+        user_id = callback.from_user.id
+        rescheduler_jobs(scheduler, user_id, date_of_record)
 
         time.sleep(0.5)
         await callback.message.edit_text(
