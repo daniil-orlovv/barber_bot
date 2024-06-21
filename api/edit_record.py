@@ -1,7 +1,8 @@
-import requests
 import datetime
-from config_data.config import COMPANY_ID, PARTNER_TOKEN
 
+import requests
+
+from config_data.config import COMPANY_ID, PARTNER_TOKEN
 
 current_year = datetime.datetime.now().year
 

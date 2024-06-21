@@ -2,20 +2,20 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.jobstores.memory import MemoryJobStore
-from apscheduler.jobstores.mongodb import MongoDBJobStore
-from config_data.config import Config, load_config
-from errors.errors import check_tokens
-from handlers.user_handlers import (create_record, edit_record, contacts,
-                                    services, feedbacks, get_records,
-                                    cancel_record, auth)
-from handlers.admin_handlers import get_jobs
-from models.models import Base
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy import create_engine
 from sqlalchemy.pool import QueuePool
+
+from config_data.config import Config, load_config
+from errors.errors import check_tokens
+from handlers.admin_handlers import get_jobs
+from handlers.user_handlers import (auth, cancel_record, contacts,
+                                    create_record, edit_record,
+                                    feedbacks_company, feedbacks_master,
+                                    get_records, services)
 from middlewares.middleware import DBMiddleware
+from models.models import Base
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +49,12 @@ async def main():
         dp.include_router(edit_record.router)
         dp.include_router(contacts.router)
         dp.include_router(services.router)
-        dp.include_router(feedbacks.router)
+        dp.include_router(feedbacks_master.router)
         dp.include_router(get_records.router)
         dp.include_router(cancel_record.router)
         dp.include_router(auth.router)
         dp.include_router(get_jobs.router)
+        dp.include_router(feedbacks_company.router)
         dp.update.outer_middleware(DBMiddleware())
         dp.workflow_data.update({
             'engine': engine, 'bot': bot, 'config': config,

@@ -1,7 +1,7 @@
 import requests
+
 from config_data.config import COMPANY_ID, PARTNER_TOKEN
 from utils.utils import return_date_iso8601
-
 
 headers = {
     'Authorization': f'Bearer {PARTNER_TOKEN}',

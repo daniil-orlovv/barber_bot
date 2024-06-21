@@ -2,8 +2,8 @@ import datetime
 import logging
 
 from aiogram import Router
-from aiogram.types import Message
 from aiogram.filters import Command
+from aiogram.types import Message
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,6 @@ async def get_jobs(message: Message, scheduler):
 
     jobs = scheduler.get_jobs()
     jobs_str = '\n'.join(map(str, jobs))
-    print(jobs)
     await message.answer(text=jobs_str)
 
 

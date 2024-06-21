@@ -1,12 +1,13 @@
-import requests
-from requests.exceptions import ConnectionError, Timeout
 import datetime
 import logging
 from http import HTTPStatus
-from config_data.config import COMPANY_ID, PARTNER_TOKEN
-from utils.utils import return_date_iso8601
+
+import requests
+from requests.exceptions import ConnectionError, Timeout
 
 from api.settings_api import urls
+from config_data.config import COMPANY_ID, PARTNER_TOKEN
+from utils.utils import return_date_iso8601
 
 logger = logging.getLogger(__name__)
 

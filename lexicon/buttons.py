@@ -1,5 +1,5 @@
-from config_data.config import (ADRESS_URL_GOOGLE, ADRESS_URL_YANDEX,
-                                ADRESS_URL_2GIS)
+from config_data.config import (ADRESS_URL_2GIS, ADRESS_URL_GOOGLE,
+                                ADRESS_URL_YANDEX)
 
 start_buttons = {
     'buttons': ['Авторизоваться 🔑', 'Мои записи 📖', 'Записаться ✏️',

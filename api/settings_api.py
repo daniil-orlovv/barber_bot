@@ -1,6 +1,5 @@
 from config_data.config import PARTNER_TOKEN
 
-
 headers_bearer_token = {
     'Authorization': f'Bearer {PARTNER_TOKEN}',
     'Accept': 'application/vnd.api.v2+json',
@@ -27,8 +26,10 @@ urls = {
         'https://api.yclients.com/api/v1/book_record/{}/',
     'get_all_services':
         'https://api.yclients.com/api/v1/book_services/{}',
-    'feedback':
-        'https://api.yclients.com/api/v1/comments/{}/{}'
+    'get_feedback_master':
+        'https://api.yclients.com/api/v1/comments/{}/{}',
+    'get_feedback_company':
+        'https://api.yclients.com/api/v1/comments/{}',
 }
 
 request_body = {

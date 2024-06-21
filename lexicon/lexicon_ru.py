@@ -1,4 +1,4 @@
-from config_data.config import ADDRESS, TIME, PHONE
+from config_data.config import ADDRESS, PHONE, TIME
 
 WELCOME_TEXT = (
     'Привет!\nЯ бот Максуда!'

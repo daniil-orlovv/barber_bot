@@ -2,29 +2,26 @@ import datetime
 import logging
 import time
 
-from aiogram import Bot, F, types, Router
-from aiogram.types import Message
-from aiogram.filters import StateFilter, CommandStart
+from aiogram import Bot, F, Router
+from aiogram.filters import CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
+from aiogram.types import CallbackQuery, Message
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.orm import Session
 
-from keyboards.keyboards_utils import (create_inline_kb, create_calendar,
-                                       create_kb)
-from api.create_record import (get_free_date, get_free_time,
-                               get_free_services, get_free_staff,
-                               create_record)
 from api.check_record import check_record_for_create
-from utils.utils import to_normalize_date
-from filters.filters import (CheckFreeStaff, CheckFreeService, CheckFreeDate,
-                             CheckFreeTime, CheckCallbackAccept,
-                             CheckCallbackCancel, CheckCallbackRecreateRecord)
-from states.states import SignUpFSM
-import lexicon.lexicon_ru as lexicon
-from lexicon.buttons import accept_cancel, start_buttons, recreate_record
-from handlers.user_handlers.feedbacks import get_feedback
-from handlers.user_handlers.notifications import (notify_day, notify_hour,
-                                                  notify_month, notify_week)
+from api.create_record import (create_record, get_free_date, get_free_services,
+                               get_free_staff, get_free_time)
+from filters.filters import (CheckCallbackAccept, CheckCallbackCancel,
+                             CheckCallbackRecreateRecord, CheckFreeDate,
+                             CheckFreeService, CheckFreeStaff, CheckFreeTime)
 from handlers.user_handlers.schedulers import create_jobs
+from keyboards.keyboards_utils import (create_calendar, create_inline_kb,
+                                       create_kb)
+from lexicon import lexicon_ru as lexicon
+from lexicon.buttons import accept_cancel, recreate_record, start_buttons
+from states.states import SignUpFSM
+from utils.utils import to_normalize_date
 
 logger = logging.getLogger(__name__)
 
@@ -35,14 +32,18 @@ current_year = datetime.datetime.now().year
 
 
 @router.message(CommandStart())
-async def start(message: Message):
+async def start(message: Message) -> None:
+    """Хэндлер реагирует на команду /start и отправляет приветствие и
+    клавиатуру пользователю."""
 
     keyboard = create_kb(start_buttons['adjust'], *start_buttons['buttons'])
     await message.answer(text=lexicon.WELCOME_TEXT, reply_markup=keyboard)
 
 
 @router.message(F.text == 'Записаться ✏️')
-async def send_masters(message: Message, state: FSMContext):
+async def send_masters(message: Message, state: FSMContext) -> None:
+    """Хэндлер реагирует на кнопку с надписью 'Записаться ✏️' и отправляет
+    инлайн-клавиатуру пользователю с сотрудниками на выбор."""
 
     free_staffs = get_free_staff()
     inverted_staffs = {v: k for k, v in free_staffs.items()}
@@ -58,7 +59,10 @@ async def send_masters(message: Message, state: FSMContext):
 
 
 @router.callback_query(CheckCallbackRecreateRecord())
-async def send_masters_recreate(callback, state: FSMContext):
+async def send_masters_recreate(callback: CallbackQuery,
+                                state: FSMContext) -> None:
+    """Хэндлер реагирует на callback='recreate' и запускает цепочку записи по
+    новой, предлагая сотрудников для пользователя, как и хэндлер выше."""
 
     free_staffs = get_free_staff()
     inverted_staffs = {v: k for k, v in free_staffs.items()}
@@ -74,7 +78,12 @@ async def send_masters_recreate(callback, state: FSMContext):
 
 
 @router.callback_query(CheckFreeStaff(), StateFilter(SignUpFSM.staff))
-async def send_service(callback: types.CallbackQuery, state: FSMContext):
+async def send_service(callback: CallbackQuery,
+                       state: FSMContext) -> None:
+    """Хэндлер проверяет совпадение callback и результата запроса на
+    сотрудников по api, реагирует на состояние SignUpFSM.staff, получает и
+    запоминает сотрудника, которого выбрал пользователь. Отправляет услуги,
+    связанные с этим сотрудником, пользователю."""
 
     await callback.message.edit_text('Ищу доступные услуги... ⏳')
     staff_id = callback.data
@@ -99,7 +108,11 @@ async def send_service(callback: types.CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(StateFilter(SignUpFSM.service), CheckFreeService())
-async def send_date(callback: types.CallbackQuery, state: FSMContext):
+async def send_date(callback: CallbackQuery, state: FSMContext) -> None:
+    """Хэндлер проверяет совпадение callback и результата запроса на
+    услуги по api, реагирует на состояние SignUpFSM.service, получает и
+    запоминает услугу, которую выбрал пользователь. Отправляет свободные даты,
+    связанные с этой услугой, пользователю."""
 
     await callback.message.edit_text('Ищу свободные даты... ⏳')
     service_id = callback.data
@@ -123,7 +136,11 @@ async def send_date(callback: types.CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(StateFilter(SignUpFSM.date), CheckFreeDate())
-async def send_time(callback: types.CallbackQuery, state: FSMContext):
+async def send_time(callback: CallbackQuery, state: FSMContext) -> None:
+    """Хэндлер проверяет совпадение callback и результата запроса на
+    даты по api, реагирует на состояние SignUpFSM.date, получает и
+    запоминает дату, которую выбрал пользователь. Отправляет свободное время,
+    связанное с этой датой, пользователю."""
 
     await callback.message.edit_text('Ищу свободное время... ⏳')
     state_data = await state.get_data()
@@ -149,9 +166,13 @@ async def send_time(callback: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(StateFilter(SignUpFSM.time), CheckFreeTime())
 async def pre_check(
-    callback: types.CallbackQuery,
+    callback: CallbackQuery,
     state: FSMContext
-):
+) -> None:
+    """Хэндлер проверяет совпадение callback и результата запроса на
+    время по api, реагирует на состояние SignUpFSM.time, получает и
+    запоминает время, которое выбрал пользователь. Отправляет
+    инлайн-клавиатуру с подтверждением/отменой данных о записи."""
 
     await callback.message.edit_text('Загрузка... ⏳')
     await state.update_data(time=callback.data)
@@ -175,7 +196,9 @@ async def pre_check(
 
 @router.callback_query(StateFilter(SignUpFSM.check_data),
                        CheckCallbackCancel())
-async def cancel(callback: types.CallbackQuery, state: FSMContext):
+async def cancel(callback: CallbackQuery, state: FSMContext) -> None:
+    """Хэндлер реагирует на состояние SignUpFSM.check_data, и проверяет
+    совпадение callbcak с 'cancel'. Отменяет процесс записи."""
 
     await callback.message.edit_text('Загрузка... ⏳')
     time.sleep(0.5)
@@ -187,7 +210,13 @@ async def cancel(callback: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(StateFilter(SignUpFSM.check_data),
                        CheckCallbackAccept())
-async def get_name(callback: types.CallbackQuery, state: FSMContext):
+async def get_name(callback: CallbackQuery, state: FSMContext) -> None:
+    """Хэндлер реагирует на состояние SignUpFSM.check_data, и проверяет
+    совпадение callbcak с 'accept'. Проверяет возможность создания записи с
+    такими данными с помощью запроса по api. Если все в порядке, то
+    запрашивает имя пользователя для создания записи. Если нет - уведомляет
+    пользователя и отправляет инлайн-клавиатуру с возможностью отменить
+    запись или изменить ее данные."""
 
     state_data = await state.get_data()
     response = check_record_for_create(state_data)
@@ -212,7 +241,9 @@ async def get_name(callback: types.CallbackQuery, state: FSMContext):
 
 
 @router.message(StateFilter(SignUpFSM.name), F.text.isalpha())
-async def get_phone(message: Message, state: FSMContext, bot: Bot):
+async def get_phone(message: Message, state: FSMContext, bot: Bot) -> None:
+    """Хэндлер реагирует на состояние SignUpFSM.name и наличие букв в
+    сообщении. Получает и запоминает имя пользователя для записи."""
 
     await state.update_data(name=message.text)
 
@@ -231,9 +262,18 @@ async def get_phone(message: Message, state: FSMContext, bot: Bot):
 
 
 @router.message(StateFilter(SignUpFSM.check_data))
-async def creating_and_check(message: Message, state: FSMContext, bot: Bot):
+async def creating_and_check(message: Message, state: FSMContext,
+                             bot: Bot) -> None:
+    """Хэндлер реагирует на состояние SignUpFSM.check_data и наличие букв в
+    сообщении. Получает, проверяет и запоминает номер пользователя для
+    записи."""
 
-    await state.update_data(phone=message.text)
+    phone = message.text
+    if not phone.isdigit() or not phone.startswith('7') or len(phone) != 11:
+        await message.answer(
+            text='Неправильный формат номера телефона. Попробуйте еще раз.')
+        return
+    await state.update_data(phone=phone)
     adjust = (2, 2)
     keyboard = create_inline_kb(adjust, **accept_cancel)
 
@@ -255,22 +295,17 @@ async def creating_and_check(message: Message, state: FSMContext, bot: Bot):
 
 @router.callback_query(StateFilter(SignUpFSM.accept_session),
                        CheckCallbackAccept())
-async def accept_creating(callback: types.CallbackQuery, state: FSMContext,
-                          session: Session, scheduler, bot):
+async def accept_creating(callback: CallbackQuery, state: FSMContext,
+                          session: Session, scheduler: AsyncIOScheduler,
+                          bot: Bot) -> None:
+    """Хэндлер реагирует на состояние SignUpFSM.accept_session и на наличие
+    'accept' в callback. Создает запись на сеанс. Если неуспешно, то выводит
+    информацию."""
 
     await callback.message.edit_text('Записываю на сеанс... ⏳')
-    data_for_request = await state.get_data()
-    print(data_for_request['date'], data_for_request['time']) # -> 2024-6-20 17:00
-    date_record = data_for_request['date']
-    date_record_split = date_record.split('-')
-    time_record = data_for_request['time']
-    time_record_split = time_record.split(':')
-    date_of_record = date_record_split + time_record_split
-    date_of_record = [int(x) for x in date_of_record]
-    user_id = callback.from_user.id
-    response = await create_record(data_for_request)
-
-    create_jobs(scheduler, bot, user_id, date_of_record)
+    state_data = await state.get_data()
+    response = await create_record(state_data)
+    create_jobs(scheduler, bot, state_data, callback)
 
     response_data = response.json()
     if response.status_code == 201:
@@ -298,7 +333,9 @@ async def accept_creating(callback: types.CallbackQuery, state: FSMContext,
 
 
 @router.message(F.text == 'Отмена ❌')
-async def cancel_creating(message: Message, state: FSMContext):
+async def cancel_creating(message: Message, state: FSMContext) -> None:
+    """Хэндлер реагирует на кнопку с надписью 'Отмена ❌' и отменяет все любые
+    действия пользователя и перебрасывает в главное меню."""
 
     keyboard = create_kb(start_buttons['adjust'], *start_buttons['buttons'])
 

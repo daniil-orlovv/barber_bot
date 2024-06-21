@@ -39,10 +39,8 @@ def create_inline_kb(method_kb, *args, **kwargs) -> InlineKeyboardMarkup:
     buttons: list[InlineKeyboardButton] = []
 
     if kwargs:
-        print('kwargs: {kwargs}')
 
         for key, value in kwargs.items():
-            print(key, value)
             if value.startswith('https'):
                 buttons.append(InlineKeyboardButton(
                     text=key,

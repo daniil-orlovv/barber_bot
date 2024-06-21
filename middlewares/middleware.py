@@ -1,10 +1,8 @@
-import logging
 from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
 from sqlalchemy.orm import sessionmaker
-
 
 
 class DBMiddleware(BaseMiddleware):
@@ -18,7 +16,6 @@ class DBMiddleware(BaseMiddleware):
     ) -> Any:
 
         engine = data['engine']
-        print(engine)
         connection = engine.connect()
         Session = sessionmaker(bind=engine)
         session = Session(bind=connection)

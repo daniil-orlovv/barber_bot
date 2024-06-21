@@ -7,11 +7,13 @@ router = Router()
 
 
 @router.message(F.text == 'Все услуги ✂️')
-async def services(message: Message):
+async def services(message: Message) -> None:
+    """Хэндлер реагирует на кнопку с надписью 'Все услуги ✂️' и оптравляет все
+    доступные услуги компании."""
 
     info_services = get_all_services()
 
-    mess = ''
+    msg = ''
     for title, cost in info_services.items():
-        mess += f"✂️{title} -  💵{cost} руб.\n"
-    await message.answer(text=mess)
+        msg += f"✂️{title} -  💵{cost} руб.\n"
+    await message.answer(text=msg)
