@@ -18,17 +18,18 @@ def create_jobs(scheduler: AsyncIOScheduler, bot: Bot, state_data: dict,
 
     date_of_record, user_id = get_data_and_user_id(state_data, callback)
 
-    # time_for_feedback = datetime.datetime(*date_of_record) + datetime.timedelta(hours=2)
-    # one_day_notice = datetime.datetime(*date_of_record) - datetime.timedelta(days=1)
-    # two_hours_notice = datetime.datetime(*date_of_record) - datetime.timedelta(hours=2)
-    # after_four_weeks = datetime.datetime(*date_of_record) + datetime.timedelta(weeks=4)
-    # after_four_monts = datetime.datetime(*date_of_record) + datetime.timedelta(weeks=16)
+    time_for_feedback = datetime.datetime(*date_of_record) + datetime.timedelta(hours=2)
+    one_day_notice = datetime.datetime(*date_of_record) - datetime.timedelta(days=1)
+    two_hours_notice = datetime.datetime(*date_of_record) - datetime.timedelta(hours=2)
+    after_four_weeks = datetime.datetime(*date_of_record) + datetime.timedelta(weeks=4)
+    after_four_monts = datetime.datetime(*date_of_record) + datetime.timedelta(weeks=16)
 
-    time_for_feedback = datetime.datetime.now() + datetime.timedelta(seconds=10)
-    one_day_notice = datetime.datetime.now() + datetime.timedelta(seconds=20)
-    two_hours_notice = datetime.datetime.now() + datetime.timedelta(seconds=30)
-    after_four_weeks = datetime.datetime.now() + datetime.timedelta(seconds=40)
-    after_four_monts = datetime.datetime.now() + datetime.timedelta(seconds=50)
+    # fast_test:
+    # time_for_feedback = datetime.datetime.now() + datetime.timedelta(seconds=10)
+    # one_day_notice = datetime.datetime.now() + datetime.timedelta(seconds=20)
+    # two_hours_notice = datetime.datetime.now() + datetime.timedelta(seconds=30)
+    # after_four_weeks = datetime.datetime.now() + datetime.timedelta(seconds=40)
+    # after_four_monts = datetime.datetime.now() + datetime.timedelta(seconds=50)
 
     scheduler.add_job(get_feedback, 'date',
                       run_date=time_for_feedback, jobstore='default',
@@ -53,17 +54,18 @@ def rescheduler_jobs(scheduler: AsyncIOScheduler, state_data: dict,
 
     date_of_record, user_id = get_new_data_and_user_id(state_data, callback)
 
-    # time_for_feedback = datetime.datetime(*date_of_record) + datetime.timedelta(hours=2)
-    # one_day_notice = datetime.datetime(*date_of_record) - datetime.timedelta(days=1)
-    # two_hours_notice = datetime.datetime(*date_of_record) - datetime.timedelta(hours=2)
-    # after_four_weeks = datetime.datetime(*date_of_record) + datetime.timedelta(weeks=4)
-    # after_four_monts = datetime.datetime(*date_of_record) + datetime.timedelta(weeks=16)
+    time_for_feedback = datetime.datetime(*date_of_record) + datetime.timedelta(hours=2)
+    one_day_notice = datetime.datetime(*date_of_record) - datetime.timedelta(days=1)
+    two_hours_notice = datetime.datetime(*date_of_record) - datetime.timedelta(hours=2)
+    after_four_weeks = datetime.datetime(*date_of_record) + datetime.timedelta(weeks=4)
+    after_four_monts = datetime.datetime(*date_of_record) + datetime.timedelta(weeks=16)
 
-    time_for_feedback = datetime.datetime.now() + datetime.timedelta(seconds=10)
-    one_day_notice = datetime.datetime.now() + datetime.timedelta(seconds=20)
-    two_hours_notice = datetime.datetime.now() + datetime.timedelta(seconds=30)
-    after_four_weeks = datetime.datetime.now() + datetime.timedelta(seconds=40)
-    after_four_monts = datetime.datetime.now() + datetime.timedelta(seconds=50)
+    # fast_test
+    # time_for_feedback = datetime.datetime.now() + datetime.timedelta(seconds=10)
+    # one_day_notice = datetime.datetime.now() + datetime.timedelta(seconds=20)
+    # two_hours_notice = datetime.datetime.now() + datetime.timedelta(seconds=30)
+    # after_four_weeks = datetime.datetime.now() + datetime.timedelta(seconds=40)
+    # after_four_monts = datetime.datetime.now() + datetime.timedelta(seconds=50)
 
     scheduler.reschedule_job(
         job_id=f'feedback_{user_id}', trigger='date',
